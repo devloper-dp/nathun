@@ -24,31 +24,27 @@ export default {
       },
       colors: {
         primary: {
-          DEFAULT: '#FFB800',
-          50: '#FFF3D6',
-          100: '#FFE9AD',
-          200: '#FFD45C',
-          300: '#FFC833',
-          400: '#FFB800',
-          500: '#FFB800',
-          600: '#CC9300',
-          700: '#996E00',
-          800: '#664900',
-          900: '#332500'
+          DEFAULT: '#FFCC00',
+          50: '#FFF9E5',
+          100: '#FFF3CC',
+          200: '#FFE799',
+          300: '#FFDB66',
+          400: '#FFCF33',
+          500: '#FFCC00',
+          600: '#CCA300',
+          700: '#997A00',
+          800: '#665200',
+          900: '#332900'
         },
         secondary: {
-          DEFAULT: '#1A1A1A',
-          light: '#2A2A2A',
-          dark: '#0A0A0A'
+          DEFAULT: '#6B7280',
+          light: '#9CA3AF',
+          dark: '#4B5563'
         },
-        success: '#22C55E',
-        warning: '#F59E0B',
-        error: '#EF4444',
+        success: '#059669',
+        warning: '#D97706',
+        error: '#DC2626',
         background: '#1A1A1A'
-      },
-      boxShadow: {
-        card: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)'
       },
       fontSize: {
         'xxs': '0.625rem',
@@ -70,26 +66,38 @@ export default {
         '84': '21rem',
         '96': '24rem',
       },
-      animation: {
-        'gradient': 'gradient 8s linear infinite',
-        'float': 'float 6s ease-in-out infinite',
+      height: {
+        'screen-50': '50vh',
+        'screen-75': '75vh',
+        'screen-90': '90vh',
       },
-      keyframes: {
-        gradient: {
-          '0%, 100%': {
-            'background-size': '200% 200%',
-            'background-position': 'left center'
-          },
-          '50%': {
-            'background-size': '200% 200%',
-            'background-position': 'right center'
-          },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-20px)' },
-        },
+      minHeight: {
+        'screen-50': '50vh',
+        'screen-75': '75vh',
+        'screen-90': '90vh',
       },
+      maxWidth: {
+        'screen-sm': '640px',
+        'screen-md': '768px',
+        'screen-lg': '1024px',
+        'screen-xl': '1280px',
+        'screen-2xl': '1536px',
+      },
+      padding: {
+        'screen-5': '5vw',
+        'screen-10': '10vw',
+      },
+      margin: {
+        'screen-5': '5vw',
+        'screen-10': '10vw',
+      },
+      borderRadius: {
+        'screen': '1vw',
+      },
+      gridTemplateColumns: {
+        'auto-fit': 'repeat(auto-fit, minmax(250px, 1fr))',
+        'auto-fill': 'repeat(auto-fill, minmax(250px, 1fr))',
+      }
     }
   },
   plugins: []
