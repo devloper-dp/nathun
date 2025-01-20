@@ -35,12 +35,12 @@ export default function Navbar() {
   return (
     <nav className="fixed w-full bg-white/95 backdrop-blur-sm z-50 shadow-sm">
       <div className="container-responsive">
-        <div className="flex justify-between h-16 sm:h-20 items-center">
+        <div className="flex justify-between h-24 sm:h-35 items-center">
           <button 
             onClick={() => handleNavigation('home')}
             className="flex items-center group transition-transform duration-200 hover:scale-105"
           >
-            <img src={logo} alt="Logo" className="h-8 sm:h-10 w-auto text-yellow-500 transition-transform duration-200 group-hover:rotate-90" />
+            <img src={logo} alt="Logo" className="h-40 w-auto text-yellow-500 transition-transform duration-200 group-hover:rotate-90" />
             <span className="ml-2 text-lg sm:text-xl font-bold text-gray-800 group-hover:text-yellow-500">
               Nathun Energies
             </span>
