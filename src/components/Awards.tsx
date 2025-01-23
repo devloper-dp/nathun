@@ -1,26 +1,28 @@
 import { motion } from 'framer-motion';
 import { Award, Star, Shield, Trophy } from 'lucide-react';
 import Marquee from 'react-fast-marquee';
+import { Suspense } from 'react';
 import Awards3D from './Awards3D';
 import AwardCard from './AwardCard';
 import CertificationCard from './CertificationCard';
+import LoadingSpinner from './common/LoadingSpinner';
 
 interface AwardProps {
-  icon: React.ReactNode; // Icon can be any React node
+  icon: React.ReactNode;
   title: string;
   organization: string;
   description: string;
-  color: string; // Tailwind gradient class
-  image: string; // Path to the image
+  color: string;
+  image: string;
 }
 
 interface CertificationProps {
   name: string;
-  logo: string; // Path to the logo
+  logo: string;
   description: string;
-  validUntil: string; // Expiry year
-  details: string[]; // List of details
-  color: string; // Tailwind gradient class
+  validUntil: string;
+  details: string[];
+  color: string;
 }
 
 const awards: AwardProps[] = [
@@ -30,7 +32,7 @@ const awards: AwardProps[] = [
     organization: 'Renewable Energy Awards',
     description: 'Excellence in solar solutions and customer service',
     color: 'from-yellow-400 to-yellow-600',
-    image: '/awards/best-solar.webp',
+    image: 'https://images.unsplash.com/photo-1613665813446-82a78c468a1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
   },
   {
     icon: <Award className="h-8 w-8 text-white" />,
@@ -38,7 +40,7 @@ const awards: AwardProps[] = [
     organization: 'Solar Technology Forum',
     description: 'Pioneering smart solar monitoring systems',
     color: 'from-blue-400 to-blue-600',
-    image: '/awards/innovation.webp',
+    image: 'https://images.unsplash.com/photo-1592833159155-c62df1b65634?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
   },
   {
     icon: <Shield className="h-8 w-8 text-white" />,
@@ -46,7 +48,7 @@ const awards: AwardProps[] = [
     organization: 'ISO 9001:2015',
     description: 'Certified quality management system',
     color: 'from-green-400 to-green-600',
-    image: '/awards/quality.webp',
+    image: 'https://images.unsplash.com/photo-1611365892117-00ac5ef43c90?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
   },
   {
     icon: <Star className="h-8 w-8 text-white" />,
@@ -54,63 +56,63 @@ const awards: AwardProps[] = [
     organization: 'Consumer Choice Awards',
     description: 'Highest rated solar provider in the region',
     color: 'from-purple-400 to-purple-600',
-    image: '/awards/customer.webp',
-  },
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+  }
 ];
 
 const certifications: CertificationProps[] = [
   {
     name: 'ISO 9001:2015',
-    logo: '/certifications/iso.webp',
+    logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
     description: 'Quality Management System',
     validUntil: '2025',
     details: [
       'International quality standards',
       'Process optimization',
       'Customer satisfaction focus',
-      'Continuous improvement',
+      'Continuous improvement'
     ],
-    color: 'from-blue-400 to-blue-600',
+    color: 'from-blue-400 to-blue-600'
   },
   {
     name: 'MNRE Approved',
-    logo: '/certifications/mnre.webp',
+    logo: 'https://images.unsplash.com/photo-1497440001374-f26997328c1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
     description: 'Ministry of New and Renewable Energy',
     validUntil: '2024',
     details: [
       'Government authorized',
       'Quality standards compliance',
       'Technical specifications met',
-      'Regular audits',
+      'Regular audits'
     ],
-    color: 'from-green-400 to-green-600',
+    color: 'from-green-400 to-green-600'
   },
   {
     name: 'CEA Certified',
-    logo: '/certifications/cea.webp',
+    logo: 'https://images.unsplash.com/photo-1591696205602-2f950c417cb9?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
     description: 'Central Electricity Authority',
     validUntil: '2024',
     details: [
       'Safety standards compliance',
       'Grid connectivity approved',
       'Technical competence',
-      'Regular monitoring',
+      'Regular monitoring'
     ],
-    color: 'from-yellow-400 to-yellow-600',
+    color: 'from-yellow-400 to-yellow-600'
   },
   {
     name: 'BIS Certified',
-    logo: '/certifications/bis.webp',
+    logo: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
     description: 'Bureau of Indian Standards',
     validUntil: '2024',
     details: [
       'Product quality standards',
       'Manufacturing excellence',
       'Safety compliance',
-      'Regular quality checks',
+      'Regular quality checks'
     ],
-    color: 'from-purple-400 to-purple-600',
-  },
+    color: 'from-purple-400 to-purple-600'
+  }
 ];
 
 export default function Awards() {
@@ -137,7 +139,16 @@ export default function Awards() {
           </p>
         </motion.div>
 
-        <Awards3D />
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="awards-3d-container canvas-interactive canvas-shadow"
+        >
+          <Suspense fallback={<LoadingSpinner />}>
+            <Awards3D />
+          </Suspense>
+        </motion.div>
 
         <Marquee gradient={false} speed={50}>
           {awards.map((award, index) => (
@@ -162,7 +173,7 @@ export default function Awards() {
 
         <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {certifications.map((cert, index) => (
-            <CertificationCard key={index} cert={cert} />
+            <CertificationCard key={index} certifications={[cert]} index={0} />
           ))}
         </div>
 
@@ -180,7 +191,7 @@ export default function Awards() {
             whileTap={{ scale: 0.95 }}
             className="mt-8 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-8 py-4 rounded-full font-semibold inline-flex items-center group hover:shadow-lg hover:shadow-yellow-500/30 transition-all duration-300"
           >
-            View All Recognitions
+             Recognitions
             <Trophy className="ml-2 h-5 w-5" />
           </motion.button>
         </motion.div>

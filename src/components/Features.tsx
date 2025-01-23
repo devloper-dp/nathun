@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Sun, Battery, Wallet, LineChart, Clock, ArrowRight } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import gridSvg from '../assets/grid.svg';
+import Features3D from './Features3D';
+import LoadingSpinner from './common/LoadingSpinner';
 
 interface Feature {
-  icon: React.ReactNode;
+  icon: React.ReactNode & { className?: string };  
   title: string;
   description: string;
   stats: {
@@ -83,21 +85,11 @@ const features: Feature[] = [
   }
 ];
 
-export default function Features() {
-  const { ref, inView } = useInView({
+const Features: React.FC = () => {
+  const { inView } = useInView({
     threshold: 0.1,
     triggerOnce: true
   });
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -133,13 +125,18 @@ export default function Features() {
           </p>
         </motion.div>
 
-        <motion.div
-          ref={ref}
-          variants={containerVariants}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="features-3d-container canvas-interactive canvas-shadow"
         >
+          <Suspense fallback={<LoadingSpinner />}>
+            <Features3D />
+          </Suspense>
+        </motion.div>
+
+        <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <motion.div
               key={index}
@@ -150,7 +147,7 @@ export default function Features() {
               <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-700 rounded-2xl transform transition-transform group-hover:scale-105 group-hover:rotate-1" />
               <div className="relative p-8 bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 transform transition-transform group-hover:-rotate-1">
                 <div className={`w-14 h-14 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 transform transition-transform group-hover:scale-110 group-hover:rotate-6`}>
-                  {React.cloneElement(feature.icon, {
+                  {React.isValidElement(feature.icon) && React.cloneElement(feature.icon, {
                     className: "h-8 w-8 text-white"
                   })}
                 </div>
@@ -176,23 +173,25 @@ export default function Features() {
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-16 text-center"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-8 py-4 rounded-full font-semibold inline-flex items-center group hover:shadow-lg hover:shadow-yellow-500/30 transition-all duration-300"
+        {inView && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16 text-center"
           >
-            View All Features
-            <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
-          </motion.button>
-        </motion.div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-8 py-4 rounded-full font-semibold inline-flex items-center group hover:shadow-lg hover:shadow-yellow-500/30 transition-all duration-300"
+            >
+              View All Features
+              <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
+            </motion.button>
+          </motion.div>
+        )}
 
         <div className="grid-image">
           <img src={gridSvg} alt="Grid" />
@@ -201,3 +200,5 @@ export default function Features() {
     </section>
   );
 }
+
+export default Features;

@@ -1,182 +1,266 @@
-import { CircleDot, ArrowRight, CheckCircle2, Wrench, Clock, Sun } from 'lucide-react';
+import { useRef, useMemo, MutableRefObject } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { useInView } from 'react-intersection-observer';
-import gridSvg from '../assets/grid.svg';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Float, Trail, Environment, Text } from '@react-three/drei';
+import * as THREE from 'three';
+import { MeshDistanceMaterial } from 'three'; // Corrected import
 
-interface Step {
-  number: string;
-  title: string;
-  description: string;
-  details: string[];
-  icon: JSX.Element;
-  duration: string;
+type ProcessProps = {
+  position: { x: number; y: number; z: number };
   color: string;
-}
+  number: string;
+  isActive: boolean;
+};
 
-const steps: Step[] = [
-  {
-    number: "01",
-    title: "Site Assessment",
-    description: "Expert evaluation of your property",
-    details: [
-      "Comprehensive site analysis",
-      "Solar potential assessment",
-      "Shade analysis",
-      "Structural evaluation"
-    ],
-    icon: <Sun className="h-6 w-6" />,
-    duration: "1-2 Days",
-    color: "from-yellow-400 to-yellow-600"
-  },
-  {
-    number: "02",
-    title: "Custom Design",
-    description: "Tailored solar solution design",
-    details: [
-      "3D system modeling",
-      "Performance simulation",
-      "ROI calculation",
-      "Design optimization"
-    ],
-    icon: <Wrench className="h-6 w-6" />,
-    duration: "2-3 Days",
-    color: "from-blue-400 to-blue-600"
-  },
-  {
-    number: "03",
-    title: "Installation",
-    description: "Professional system setup",
-    details: [
-      "Expert installation team",
-      "Quality components",
-      "Safety compliance",
-      "System testing"
-    ],
-    icon: <CheckCircle2 className="h-6 w-6" />,
-    duration: "3-4 Days",
-    color: "from-green-400 to-green-600"
-  },
-  {
-    number: "04",
-    title: "Monitoring",
-    description: "24/7 system monitoring",
-    details: [
-      "Real-time monitoring",
-      "Performance tracking",
-      "Mobile app access",
-      "Instant alerts"
-    ],
-    icon: <Clock className="h-6 w-6" />,
-    duration: "Ongoing",
-    color: "from-purple-400 to-purple-600"
-  }
-];
+type Particle = {
+  x: number;
+  y: number;
+  z: number;
+};
 
-export default function Process() {
-  const [selectedStep, setSelectedStep] = useState<number>(0);
-  const { ref, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: true
+function ProcessStep({ position, color, number, isActive }: ProcessProps) {
+  const ref: MutableRefObject<THREE.Group | null> = useRef(null);
+  const glowRef: MutableRefObject<THREE.Mesh | null> = useRef(null);
+  const particlesRef: MutableRefObject<THREE.Group | null> = useRef(null);
+  const materialRef: MutableRefObject<MeshDistanceMaterial | null> = useRef(null); // Corrected type
+
+  // Create particles
+  const particles: Particle[] = useMemo(() => {
+    const temp: Particle[] = [];
+    for (let i = 0; i < 30; i++) {
+      const t = Math.random() * Math.PI * 2;
+      const r = 1 + Math.random() * 2;
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = -Math.random() * 2;
+      temp.push({ x, y, z });
+    }
+    return temp;
+  }, []);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+
+    if (ref.current) {
+      ref.current.rotation.y = Math.sin(t * 0.5) * 0.2;
+      ref.current.position.y = Math.sin(t * 0.8) * 0.1;
+    }
+
+    if (glowRef.current?.material && glowRef.current.material instanceof THREE.MeshBasicMaterial) {
+      glowRef.current.material.opacity = (0.3 + Math.sin(t * 2) * 0.1) * (isActive ? 1 : 0.5);
+    }
+
+
+    if (particlesRef.current) {
+      particlesRef.current.children.forEach((child, i) => {
+        const mesh = child as THREE.Mesh;
+        const particle = particles[i];
+        mesh.position.x = particle.x + Math.sin(t + i) * 0.1;
+        mesh.position.y = particle.y + Math.cos(t + i) * 0.1;
+        mesh.position.z = particle.z + Math.sin(t + i) * 0.1;
+        mesh.scale.setScalar(Math.sin(t * 2 + i) * 0.2 + 0.8);
+      });
+    }
+
+    if (materialRef.current && materialRef.current instanceof THREE.MeshStandardMaterial) {
+      materialRef.current.metalness = 0.3 + Math.sin(t) * 0.2;
+    }    
   });
 
   return (
-    <section id="process" className="py-24 bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('./assets/')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent" />
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
+    <Float
+      speed={2}
+      rotationIntensity={0.2}
+      floatIntensity={0.5}
+    >
+      <group ref={ref} position={new THREE.Vector3(position.x, position.y, position.z)}>
+        <Trail
+          width={2}
+          length={8}
+          color={color}
+          attenuation={(t) => t * t}
         >
-          <span className="text-yellow-500 font-semibold tracking-wider uppercase">How It Works</span>
-          <h2 className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl lg:text-5xl">
-            Our Installation Process
-          </h2>
-          <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-            Experience our streamlined solar installation process, from consultation to completion
-          </p>
-        </motion.div>
+          <mesh castShadow>
+            <cylinderGeometry args={[1, 1, 0.5, 32]} />
+            <meshStandardMaterial
+              ref={materialRef as MutableRefObject<THREE.MeshStandardMaterial | null>}
+              color={color}
+              metalness={0.9}
+              roughness={0.1}
+              transparent
+              opacity={isActive ? 1 : 0.7}
+            />
+          </mesh>
+        </Trail>
 
-        <div className="mt-24 relative">
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-yellow-500/20 via-yellow-500/40 to-yellow-500/20 transform -translate-y-1/2" />
-          
-          <div ref={ref} className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: index * 0.2 }}
-                className={`relative ${selectedStep === index ? 'active' : ''}`}
-                onClick={() => setSelectedStep(index)}
-              >
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="relative bg-white rounded-2xl shadow-xl p-8 cursor-pointer group"
-                >
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${step.color} flex items-center justify-center text-white font-bold`}>
-                      {step.number}
-                    </div>
-                  </div>
 
-                  <div className={`mt-4 w-16 h-16 rounded-xl bg-gradient-to-r ${step.color} flex items-center justify-center text-white mb-6 transform transition-transform group-hover:rotate-6`}>
-                    {step.icon}
-                  </div>
-
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
-                  <p className="text-gray-600 mb-4">{step.description}</p>
-
-                  <div className="space-y-2">
-                    {step.details.slice(0, 2).map((detail, idx) => (
-                      <div key={idx} className="flex items-center text-sm text-gray-500">
-                        <CircleDot className="h-4 w-4 text-yellow-500 mr-2" />
-                        {detail}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{step.duration}</span>
-                    <motion.button
-                      whileHover={{ x: 5 }}
-                      className={`flex items-center text-sm font-semibold bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}
-                    >
-                      Learn More <ArrowRight className="ml-1 h-4 w-4" />
-                    </motion.button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid-image">
-          <img src={gridSvg} alt="Grid" />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-16 text-center"
+        <Text
+          position={new THREE.Vector3(0, 0, 0.3)}
+          fontSize={0.5}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
         >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-8 py-4 rounded-full font-semibold inline-flex items-center group hover:shadow-lg hover:shadow-yellow-500/30 transition-all duration-300"
-          >
-            Start Your Solar Journey
-            <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
-          </motion.button>
-        </motion.div>
-      </div>
-    </section>
+          {number}
+        </Text>
+
+        {/* Glow Effect */}
+        <mesh ref={glowRef}>
+          <sphereGeometry args={[1.2, 32, 32]} />
+          <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={0.2}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+
+        {/* Particle System */}
+        <group ref={particlesRef}>
+          {particles.map((p, i) => (
+            <mesh key={i} position={new THREE.Vector3(p.x, p.y, p.z)}>
+              <sphereGeometry args={[0.02, 16, 16]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={2}
+                transparent
+                opacity={isActive ? 1 : 0.5}
+              />
+            </mesh>
+          ))}
+        </group>
+      </group>
+    </Float>
+  );
+}
+
+function Scene({ activeStep = 0 }: { activeStep: number }) {
+  const steps = [
+    { color: '#FDB813', number: '01' },
+    { color: '#3B82F6', number: '02' },
+    { color: '#10B981', number: '03' },
+    { color: '#8B5CF6', number: '04' }
+  ];
+
+  return (
+    <Canvas camera={{ position: [0, 0, 10], fov: 50 }} shadows>
+      <color attach="background" args={['#111827']} />
+
+      <ambientLight intensity={0.5} />
+      <spotLight
+        position={[10, 10, 10]}
+        angle={0.15}
+        penumbra={1}
+        intensity={2}
+        castShadow
+      />
+
+      <group position={new THREE.Vector3(-6, 0, 0)}>
+        {steps.map((step, index) => (
+          <ProcessStep
+            key={index}
+            position={new THREE.Vector3(index * 4, 0, 0)}
+            color={step.color}
+            number={step.number}
+            isActive={index === activeStep}
+          />
+        ))}
+      </group>
+
+      <Environment preset="sunset" />
+      <Effects />
+      <Points />
+    </Canvas>
+  );
+}
+
+function Effects() {
+  const ref: MutableRefObject<THREE.Group | null> = useRef(null);
+
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      const meshData: { rotation: THREE.Euler } = ref.current as unknown as { rotation: THREE.Euler };
+      meshData.rotation.x = Math.sin(clock.getElapsedTime() * 0.2) * 0.3;
+      meshData.rotation.y = Math.sin(clock.getElapsedTime() * 0.3) * 0.3;
+    }
+  });
+
+  return (
+    <group ref={ref}>
+      <mesh>
+        <planeGeometry args={[40, 40]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+    </group>
+  );
+}
+
+function Points() {
+  const ref: MutableRefObject<THREE.Points | null> = useRef(null);
+  const count = 1000;
+  const positions: Float32Array = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 20;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+    }
+    return pos;
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      const meshData: { rotation: THREE.Euler } = ref.current as unknown as { rotation: THREE.Euler };
+      meshData.rotation.x = Math.sin(clock.getElapsedTime() * 0.1) * 0.2;
+      meshData.rotation.y = Math.sin(clock.getElapsedTime() * 0.2) * 0.2;
+    }
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.02}
+        color="#FDB813"
+        sizeAttenuation
+        transparent
+        opacity={0.5}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+}
+
+export default function Process3D() {
+  const [activeStep, setActiveStep] = React.useState<number>(0); // Added type annotation
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev: number) => (prev + 1) % 4); // Added type annotation
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="h-96 relative">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+        className="absolute inset-0"
+      >
+        <Scene activeStep={activeStep} />
+      </motion.div>
+    </div>
   );
 }

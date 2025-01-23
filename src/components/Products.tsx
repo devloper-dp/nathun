@@ -25,7 +25,7 @@ const products: ProductCategory[] = [
         power: "550W",
         efficiency: "21.7%",
         warranty: "25 Years",
-        image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
         features: [
           "Anti-reflective coating",
           "Enhanced low-light performance",
@@ -38,7 +38,7 @@ const products: ProductCategory[] = [
         power: "600W",
         efficiency: "23.1%",
         warranty: "30 Years",
-        image: "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1558449028-b53a39d100fc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
         features: [
           "Dual-sided power generation",
           "Enhanced durability",
@@ -56,7 +56,7 @@ const products: ProductCategory[] = [
         power: "10kW",
         efficiency: "98.6%",
         warranty: "10 Years",
-        image: "https://images.unsplash.com/photo-1566093097221-ac2335b09e70?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
         features: [
           "Battery compatibility",
           "Smart monitoring",
@@ -69,7 +69,7 @@ const products: ProductCategory[] = [
         power: "2kW",
         efficiency: "97.5%",
         warranty: "15 Years",
-        image: "https://images.unsplash.com/photo-1559302995-f1d6d0cb6c39?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
         features: [
           "Panel-level optimization",
           "Enhanced safety",
@@ -87,7 +87,7 @@ const products: ProductCategory[] = [
         power: "12V",
         efficiency: "90%",
         warranty: "5 Years",
-        image: "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1513828583688-c52646db42da?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
         features: [
           "Long cycle life",
           "High discharge rate",

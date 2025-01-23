@@ -17,7 +17,7 @@ import {
   ComposedChart,
   Brush,
 } from 'recharts';
-import { DailyProfitLoss } from '../types/calculator';
+import { DailyProfitLoss } from '../../types/calculator';
 import { ChartTypeSwitcher, ChartType } from './ChartTypeSwitcher';
 
 interface DailyTrendChartProps {

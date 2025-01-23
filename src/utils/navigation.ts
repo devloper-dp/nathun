@@ -17,8 +17,9 @@ type SocialLink = {
 };
 
 type Contact = {
-  phone: string;
+  phone: string[];
   email: string;
+  website: string;
   address: string;
 };
 
@@ -36,6 +37,7 @@ export const navigationConfig: NavigationConfig = {
     { id: 'features', label: 'Features' },
     { id: 'solutions', label: 'Solutions' },
     { id: 'products', label: 'Products' },
+    { id: 'calculator', label: 'Calculator' },
     { id: 'projects', label: 'Projects' },
     { id: 'testimonials', label: 'Testimonials' },
     { id: 'about', label: 'About' },
@@ -57,8 +59,9 @@ export const navigationConfig: NavigationConfig = {
   ],
 
   contact: {
-    phone: '+91 755-123-4567',
-    email: 'info@nathunenergies.com',
-    address: '123 MP Nagar, Zone 1, Bhopal, Madhya Pradesh 462011'
+    phone: ['+91 7566777699', '+91 8962359234'],
+    email: 'solar@nathuncorp.com',
+    website: 'www.nathunenergies.com',
+    address: 'Shop No. 3 - Azad Nagar Barkheda, Pathani Bhopal (M.P.)'
   }
 };

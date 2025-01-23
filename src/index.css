@@ -9,6 +9,183 @@
 }
 
 @layer base {
+  .hero-3d-container {
+    @apply relative h-[600px] w-full overflow-hidden rounded-xl;
+    perspective: 1000px;
+  }
+
+  .features-3d-container {
+    @apply relative h-[500px] w-full overflow-hidden rounded-xl;
+    perspective: 1000px;
+  }
+
+  .awards-3d-container {
+    @apply relative h-[400px] w-full overflow-hidden rounded-xl;
+    perspective: 1000px;
+  }
+
+  .energy-solutions-3d-container {
+    @apply relative h-[450px] w-full overflow-hidden rounded-xl;
+    perspective: 1000px;
+  }
+
+  .projects-3d-container {
+    @apply relative h-[400px] w-full overflow-hidden rounded-xl;
+    perspective: 1000px;
+  }
+
+  /* 3D Component Loading States */
+  .canvas-loading {
+    @apply absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm;
+  }
+
+  /* 3D Component Responsive Adjustments */
+  @media (max-width: 640px) {
+
+    .hero-3d-container,
+    .features-3d-container,
+    .awards-3d-container,
+    .energy-solutions-3d-container,
+    .projects-3d-container {
+      height: 300px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+
+    .hero-3d-container,
+    .features-3d-container,
+    .awards-3d-container,
+    .energy-solutions-3d-container,
+    .projects-3d-container {
+      height: 400px;
+    }
+  }
+
+  /* 3D Component Animation Classes */
+  .canvas-animate-in {
+    animation: canvas-fade-in 0.5s ease-out forwards;
+  }
+
+  .canvas-animate-out {
+    animation: canvas-fade-out 0.5s ease-out forwards;
+  }
+
+  @keyframes canvas-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes canvas-fade-out {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    to {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+
+  /* Enhanced 3D Component Interaction States */
+  .canvas-interactive {
+    @apply transition-transform duration-300 ease-out;
+  }
+
+  .canvas-interactive:hover {
+    transform: scale(1.02);
+  }
+
+  /* Enhanced 3D Component Shadows */
+  .canvas-shadow {
+    @apply relative;
+  }
+
+  .canvas-shadow::after {
+    content: '';
+    @apply absolute inset-0 rounded-xl pointer-events-none;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.2);
+  }
+
+  .awards-3d-container {
+    @apply h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px];
+  }
+
+  .energy-solutions-3d-container {
+    @apply h-[350px] sm:h-[450px] md:h-[550px] lg:h-[650px];
+  }
+
+  /* Enhanced loading states */
+  .canvas-loading {
+    @apply absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm;
+  }
+
+  /* Enhanced 3D component containers */
+  .canvas-container {
+    @apply relative w-full overflow-hidden rounded-xl;
+    perspective: 1000px;
+  }
+
+  /* Enhanced responsive adjustments */
+  @media (max-width: 640px) {
+    .canvas-container {
+      height: 300px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .canvas-container {
+      height: 400px;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    .canvas-container {
+      height: 500px;
+    }
+  }
+
+  .canvas-container {
+    @apply relative w-full;
+    height: min(60vh, 600px);
+  }
+
+  .canvas-container-sm {
+    @apply relative w-full;
+    height: min(40vh, 400px);
+  }
+
+  .canvas-container-lg {
+    @apply relative w-full;
+    height: min(80vh, 800px);
+  }
+
+  /* Enhanced 3D component responsive containers */
+  .hero-3d-container {
+    @apply h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px];
+  }
+
+  .features-3d-container {
+    @apply h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px];
+  }
+
+  .projects-3d-container {
+    @apply h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px];
+  }
+
+  /* Enhanced loading states for 3D components */
+  .canvas-loading {
+    @apply absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm;
+  }
+
   html {
     scroll-behavior: smooth;
     background-image: url('./assets/grid.svg');

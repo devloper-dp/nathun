@@ -1,209 +1,248 @@
-import React from 'react';
+import { useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Float, MeshDistortMaterial, Environment, PointMaterial, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Define types for the props of SolarPanel component
 interface SolarPanelProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
-  color?: string;
   type: 'residential' | 'commercial' | 'industrial';
+  isActive: boolean;
+  onClick: () => void;
 }
 
-function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0], color = '#FDB813', type = 'residential' }: SolarPanelProps) {
+function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0], type = 'residential', isActive, onClick }: SolarPanelProps) {
+  const ref = useRef<THREE.Group | null>(null);
+  const glowRef = useRef<THREE.Mesh | null>(null);
+  const particlesRef = useRef<THREE.Group | null>(null);
+
   const panelConfig = {
     residential: {
       panels: { rows: 2, cols: 3, size: 0.6 },
       height: 0.8,
       angle: -0.3,
-      color: '#FDB813'
+      color: '#FDB813',
+      label: 'Residential'
     },
     commercial: {
       panels: { rows: 3, cols: 4, size: 0.5 },
       height: 1.2,
       angle: -0.4,
-      color: '#3498DB'
+      color: '#3B82F6',
+      label: 'Commercial'
     },
     industrial: {
       panels: { rows: 4, cols: 5, size: 0.4 },
       height: 1.5,
       angle: -0.5,
-      color: '#2ECC71'
+      color: '#10B981',
+      label: 'Industrial'
     }
   };
 
   const config = panelConfig[type];
 
+  // Enhanced particles with more dynamic properties
+  const particles = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < 50; i++) {
+      const t = Math.random() * Math.PI * 2;
+      const r = 2 + Math.random() * 3;
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = (Math.random() - 0.5) * 2;
+      temp.push({ x, y, z, speed: 0.2 + Math.random() * 0.5 });
+    }
+    return temp;
+  }, []);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+
+    // Enhanced panel animation
+    if (ref.current) {
+      ref.current.rotation.y = Math.sin(t * 0.5) * 0.2;
+      ref.current.position.y = Math.sin(t * 0.8) * 0.1;
+      
+      // Add hover effect when active
+      if (isActive) {
+        ref.current.position.y += Math.sin(t * 2) * 0.1;
+        ref.current.scale.setScalar(1.1 + Math.sin(t * 2) * 0.05);
+      } else {
+        ref.current.scale.setScalar(1);
+      }
+    }
+
+    // Enhanced glow animation
+    if (glowRef.current) {
+      const glowIntensity = isActive ? 0.4 : 0.2;
+      glowRef.current.scale.setScalar(1 + Math.sin(t * 2) * 0.1);
+      if ('opacity' in glowRef.current.material) {
+        glowRef.current.material.opacity = glowIntensity + Math.sin(t * 2) * 0.1;
+      }
+    }
+
+    // Enhanced particles animation
+    if (particlesRef.current) {
+      particles.forEach((p, i) => {
+        const mesh = particlesRef.current?.children[i];
+        if (mesh) {
+          mesh.position.x = p.x + Math.sin(t * p.speed + i) * 0.2;
+          mesh.position.y = p.y + Math.cos(t * p.speed + i) * 0.2;
+          mesh.position.z = p.z + Math.sin(t * p.speed + i) * 0.2;
+          mesh.scale.setScalar(isActive ? (0.5 + Math.sin(t * 2 + i) * 0.3) : 0.3);
+        }
+      });
+    }
+  });
+
   return (
-    <group position={position} rotation={[config.angle, rotation[1], rotation[2]]}>
-      {/* Base Structure */}
-      <mesh position={[0, -config.height/2, 0]}>
-        <boxGeometry args={[0.1, config.height, 0.1]} />
-        <meshStandardMaterial color="#95A5A6" metalness={0.8} roughness={0.2} />
-      </mesh>
+    <group onClick={onClick} onPointerOver={() => document.body.style.cursor = 'pointer'} onPointerOut={() => document.body.style.cursor = 'default'}>
+      <Float
+        speed={2}
+        rotationIntensity={0.2}
+        floatIntensity={0.5}
+      >
+        <group ref={ref} position={position} rotation={[config.angle, rotation[1], rotation[2]]}>
+          {/* Label */}
+          <Text
+            position={[0, config.height + 0.5, 0]}
+            fontSize={0.3}
+            color={config.color}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {config.label}
+          </Text>
 
-      {/* Panel Frame */}
-      <group position={[0, 0, 0]}>
-        <mesh>
-          <boxGeometry 
-            args={[config.panels.cols * config.panels.size + 0.1, 0.05, config.panels.rows * config.panels.size + 0.1]} 
-          />
-          <meshStandardMaterial color="#FFFFFF" metalness={0.8} roughness={0.2} />
-        </mesh>
+          {/* Base Structure */}
+          <mesh position={[0, -config.height / 2, 0]}>
+            <cylinderGeometry args={[0.1, 0.2, config.height, 32]} />
+            <meshStandardMaterial
+              color="#95A5A6"
+              metalness={0.8}
+              roughness={0.2}
+            />
+          </mesh>
 
-        {/* Solar Cells */}
-        {Array.from({ length: config.panels.rows }).map((_, row) =>
-          Array.from({ length: config.panels.cols }).map((_, col) => (
-            <group
-              key={`${row}-${col}`}
-              position={[
-                (col - (config.panels.cols - 1) / 2) * config.panels.size,
-                0.03,
-                (row - (config.panels.rows - 1) / 2) * config.panels.size
-              ]}
-            >
-              <mesh>
-                <boxGeometry 
-                  args={[config.panels.size * 0.9, 0.02, config.panels.size * 0.9]} 
-                />
+          {/* Panel Array */}
+          <group>
+            {Array.from({ length: config.panels.rows }).map((_, row) =>
+              Array.from({ length: config.panels.cols }).map((_, col) => (
+                <group
+                  key={`${row}-${col}`}
+                  position={[
+                    (col - (config.panels.cols - 1) / 2) * config.panels.size,
+                    0,
+                    (row - (config.panels.rows - 1) / 2) * config.panels.size
+                  ]}
+                >
+                  <mesh>
+                    <boxGeometry
+                      args={[config.panels.size * 0.9, 0.05, config.panels.size * 0.9]}
+                    />
+                    <MeshDistortMaterial
+                      color={config.color}
+                      metalness={0.9}
+                      roughness={0.1}
+                      distort={isActive ? 0.3 : 0.1}
+                      speed={2}
+                      envMapIntensity={1}
+                    />
+                  </mesh>
+                </group>
+              ))
+            )}
+          </group>
+
+          {/* Enhanced Glow Effect */}
+          <mesh ref={glowRef}>
+            <sphereGeometry args={[2, 32, 32]} />
+            <meshBasicMaterial
+              color={config.color}
+              transparent
+              opacity={0.2}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+
+          {/* Enhanced Particle System */}
+          <group ref={particlesRef}>
+            {particles.map((p, i) => (
+              <mesh key={i} position={[p.x, p.y, p.z]}>
+                <sphereGeometry args={[0.02, 16, 16]} />
                 <meshStandardMaterial
                   color={config.color}
-                  metalness={0.9}
-                  roughness={0.1}
-                  envMapIntensity={1}
-                />
-              </mesh>
-              
-              {/* Cell Details */}
-              <mesh position={[0, 0.011, 0]}>
-                <planeGeometry 
-                  args={[config.panels.size * 0.8, config.panels.size * 0.8]}
-                />
-                <meshStandardMaterial
-                  color={config.color}
-                  metalness={1}
-                  roughness={0}
+                  emissive={config.color}
+                  emissiveIntensity={isActive ? 2 : 1}
                   transparent
-                  opacity={0.5}
+                  opacity={0.8}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
                 />
               </mesh>
-            </group>
-          ))
-        )}
-      </group>
-
-      {/* Support Brackets */}
-      <mesh position={[-0.4, -config.height/4, 0]} rotation={[0, 0, Math.PI/4]}>
-        <boxGeometry args={[0.05, 0.6, 0.05]} />
-        <meshStandardMaterial color="#D3D3D3" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[0.4, -config.height/4, 0]} rotation={[0, 0, -Math.PI/4]}>
-        <boxGeometry args={[0.05, 0.6, 0.05]} />
-        <meshStandardMaterial color="#D3D3D3" metalness={0.8} roughness={0.2} />
-      </mesh>
+            ))}
+          </group>
+        </group>
+      </Float>
     </group>
   );
 }
 
-// Define types for the Scene component
 interface SceneProps {
-  type: 'Residential' | 'Commercial' | 'Industrial';
+  activeType: 'residential' | 'commercial' | 'industrial' | 'all';
+  onTypeSelect: (type: 'residential' | 'commercial' | 'industrial') => void;
 }
 
-function Scene({ type }: SceneProps) {
+function Scene({ activeType, onTypeSelect }: SceneProps) {
+  const types: ('residential' | 'commercial' | 'industrial')[] = ['residential', 'commercial', 'industrial'];
+  
   return (
-    <Canvas
-      camera={{ position: [4, 3, 4], fov: 50 }}
-      gl={{ antialias: true }}
-      dpr={[1, 2]}
-    >
-      <color attach="background" args={['#1a1a1a']} />
-      
+    <Canvas camera={{ position: [4, 3, 4], fov: 50 }} dpr={[1, 2]}>
+      <color attach="background" args={['#111827']} />
+
       <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} />
-      
-      {/* Key Light */}
-      <directionalLight
+      <spotLight
         position={[5, 5, 5]}
+        angle={0.15}
+        penumbra={1}
         intensity={1}
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
       />
-      
-      {/* Fill Light */}
-      <directionalLight
-        position={[-5, 5, -5]}
-        intensity={0.3}
-        color="#FDB813"
-      />
+      <pointLight position={[-5, -5, -5]} intensity={0.5} />
 
-      <group position={[0, 0, 0]}>
+      {types.map((type, index) => (
         <SolarPanel
-          position={[0, 0, 0]}
+          key={type}
+          type={type}
+          position={[(index - 1) * 4, 0, 0]}
           rotation={[0, Math.PI * 0.25, 0]}
-          type={type.toLowerCase() as 'residential' | 'commercial' | 'industrial'}
+          isActive={activeType === 'all' || activeType === type}
+          onClick={() => onTypeSelect(type)}
         />
-      </group>
+      ))}
 
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        minPolarAngle={Math.PI / 4}
-        maxPolarAngle={Math.PI / 2}
-        autoRotate
-        autoRotateSpeed={4}
-      />
-
-      {/* Environment Map */}
-      <mesh scale={100}>
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshBasicMaterial
-          color="#1a1a1a"
-          side={THREE.BackSide}
-          transparent
-          opacity={0.6}
-        />
-      </mesh>
+      <Environment preset="sunset" />
     </Canvas>
   );
 }
 
-export default function Projects3D() {
+interface Projects3DProps {
+  activeType?: 'residential' | 'commercial' | 'industrial' | 'all';
+  onTypeSelect?: (type: 'residential' | 'commercial' | 'industrial') => void;
+}
+
+export default function Projects3D({ activeType = 'all', onTypeSelect = () => {} }: Projects3DProps) {
   return (
     <div className="h-96 my-12 relative">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
-        className="absolute inset-0 flex items-center justify-center"
+        className="absolute inset-0"
       >
-        <div className="grid grid-cols-3 gap-12">
-          {['Residential', 'Commercial', 'Industrial'].map((type, index) => (
-            <motion.div
-              key={type}
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: index * 0.2 }}
-              className="flex flex-col items-center"
-            >
-              <div className="w-full h-64 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg shadow-lg overflow-hidden">
-                <Scene type={type} />
-              </div>
-              <div className="mt-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-800">{type}</h3>
-                <p className="text-sm text-gray-600">
-                  {type === 'Residential' && 'Home Solar Solutions'}
-                  {type === 'Commercial' && 'Business Installations'}
-                  {type === 'Industrial' && 'Large Scale Projects'}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        <Scene activeType={activeType} onTypeSelect={onTypeSelect} />
       </motion.div>
     </div>
   );

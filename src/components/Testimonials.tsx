@@ -1,22 +1,25 @@
-import { Star, Quote, User, Building, MapPin, Sun, Play, Pause } from 'lucide-react';
+import { Star, Quote, User, Building, MapPin, Sun, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useState, useRef } from 'react';
 
 interface VideoTestimonialProps {
-  video: {
-    id: string;
-    title: string;
-    client: string;
-    role: string;
-    location: string;
-    thumbnail: string;
-    videoUrl: string;
-    date: string;
-    rating: number;
-    savings: string;
-    description: string;
-  };
+  id: string;
+  thumbnail: string;
+  title: string;
+  videoUrl: string;
+  client: string;
+  role: string;
+  location: string;
+  description: string;
+  rating: number;
+  savings: string;
+  date: string;
+  video: string;
+}
+
+interface VideoTestimonialComponentProps {
+  video: VideoTestimonialProps;
   isPlaying: boolean;
   onPlay: (videoId: string) => void;
 }
@@ -33,7 +36,8 @@ const videoTestimonials = [
     date: "2024-03-01",
     rating: 5,
     savings: "₹12,000/month",
-    description: "Switching to solar power was the best decision for our home. The installation was quick and professional."
+    description: "Switching to solar power was the best decision for our home. The installation was quick and professional.",
+    video: "video1",
   },
   {
     id: "abc456",
@@ -46,7 +50,8 @@ const videoTestimonials = [
     date: "2024-02-15",
     rating: 5,
     savings: "₹45,000/month",
-    description: "The energy savings have been remarkable. Our hotel's operating costs have reduced significantly."
+    description: "The energy savings have been remarkable. Our hotel's operating costs have reduced significantly.",
+    video: "video2",
   },
   {
     id: "def789",
@@ -59,7 +64,8 @@ const videoTestimonials = [
     date: "2024-02-01",
     rating: 5,
     savings: "₹1,80,000/month",
-    description: "The ROI has been exceptional. Our factory now runs primarily on solar power."
+    description: "The ROI has been exceptional. Our factory now runs primarily on solar power.",
+    video: "video3",
   },
   {
     id: "ghi012",
@@ -72,7 +78,8 @@ const videoTestimonials = [
     date: "2024-01-15",
     rating: 5,
     savings: "₹15,000/month",
-    description: "From consultation to installation, the entire process was smooth and professional."
+    description: "From consultation to installation, the entire process was smooth and professional.",
+    video: "video4",
   }
 ];
 
@@ -113,12 +120,7 @@ function VideoTestimonial({
   video,
   isPlaying,
   onPlay,
-}: {
-  video: VideoTestimonialProps;
-  isPlaying: boolean;
-  onPlay: (id: string) => void;
-}) {
-  const [isHovered, setIsHovered] = useState(false);
+}: VideoTestimonialComponentProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handlePlay = () => {
@@ -132,8 +134,6 @@ function VideoTestimonial({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video rounded-xl overflow-hidden">
         {!isPlaying && (
@@ -175,11 +175,9 @@ function VideoTestimonial({
           {video.title}
         </h4>
         <div className="flex items-center space-x-2 text-sm text-gray-400">
-          <span>{video.client}</span>
-          <span>•</span>
-          <span>{video.role}</span>
-          <span>•</span>
-          <span>{video.location}</span>
+          <User /> {video.client} - <Building /> {video.role}
+          <MapPin /> {video.location}
+          <Sun /> {/* Decorative icon */}
         </div>
         <p className="text-gray-400 text-sm line-clamp-2">{video.description}</p>
         <div className="flex items-center justify-between">

@@ -16,7 +16,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { ComparisonData } from '../types/calculator';
+import { ComparisonData } from '../../types/calculator';
 import { ChartTypeSwitcher, ChartType } from './ChartTypeSwitcher';
 
 interface ComparisonChartProps {

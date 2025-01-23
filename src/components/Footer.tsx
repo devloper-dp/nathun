@@ -1,5 +1,4 @@
-import React from 'react';
-import { Sun, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Sun, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Globe } from 'lucide-react';
 import { navigationConfig } from '../utils/navigation';
 import { scrollToSection, scrollToContact } from '../utils/scroll';
 import NavigationLink from './common/NavigationLink';
@@ -12,9 +11,10 @@ interface SocialLink {
 }
 
 interface Contact {
-  address: string;
-  phone: string;
+  phone: string[];
   email: string;
+  website: string;
+  address: string;
 }
 
 interface NavigationConfig {
@@ -26,6 +26,9 @@ interface NavigationConfig {
 
 export default function Footer(): JSX.Element {
   const { mainSections, services, socialLinks, contact }: NavigationConfig = navigationConfig;
+
+  // Create Google Maps URL from the address
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.address)}`;
 
   return (
     <footer className="bg-gray-900 text-white relative">
@@ -98,17 +101,26 @@ export default function Footer(): JSX.Element {
             <ul className="space-y-4">
               <li className="flex items-start">
                 <MapPin className="h-6 w-6 text-yellow-500 flex-shrink-0 mr-3" />
-                <span className="text-gray-400">{contact.address}</span>
-              </li>
-              <li>
                 <a 
-                  href={`tel:${contact.phone}`}
-                  className="flex items-center text-gray-400 hover:text-yellow-500 transition-colors"
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-yellow-500 transition-colors"
                 >
-                  <Phone className="h-6 w-6 text-yellow-500 flex-shrink-0 mr-3" />
-                  <span>{contact.phone}</span>
+                  {contact.address}
                 </a>
               </li>
+              {contact.phone.map((phoneNumber, index) => (
+                <li key={index}>
+                  <a 
+                    href={`tel:${phoneNumber}`}
+                    className="flex items-center text-gray-400 hover:text-yellow-500 transition-colors"
+                  >
+                    <Phone className="h-6 w-6 text-yellow-500 flex-shrink-0 mr-3" />
+                    <span>{phoneNumber}</span>
+                  </a>
+                </li>
+              ))}
               <li>
                 <a 
                   href={`mailto:${contact.email}`}
@@ -116,6 +128,17 @@ export default function Footer(): JSX.Element {
                 >
                   <Mail className="h-6 w-6 text-yellow-500 flex-shrink-0 mr-3" />
                   <span>{contact.email}</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href={`https://${contact.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-gray-400 hover:text-yellow-500 transition-colors"
+                >
+                  <Globe className="h-6 w-6 text-yellow-500 flex-shrink-0 mr-3" />
+                  <span>{contact.website}</span>
                 </a>
               </li>
               <li>

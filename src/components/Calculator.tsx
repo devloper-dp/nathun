@@ -37,7 +37,7 @@ export const Calculator: React.FC = () => {
   const dailyTrendData = generateDailyProfitLoss(monthlyBill, 365);
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800">
+    <div id="calculator" className="Calculator min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-4">
