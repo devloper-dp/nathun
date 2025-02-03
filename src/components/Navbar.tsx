@@ -87,7 +87,7 @@ export default function Navbar() {
               className="hidden sm:block ml-2 text-base sm:text-lg md:text-xl font-bold text-gray-800"
               animate={{ color: isScrolled ? '#1a1a1a' : '#ffffff' }}
             >
-              Nathun Energies
+
             </motion.span>
           </motion.button>
 
