@@ -2,80 +2,156 @@ import { ThreeDContainer } from './common/3DContainer';
 import { Scene } from './common/Scene';
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Float } from '@react-three/drei';
+import { Float, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
 function SolarPanel({ position, color, isActive }: any) {
   const ref = useRef<THREE.Group>(null);
   const panelsRef = useRef<THREE.Group>(null);
   const sunRef = useRef<THREE.Mesh>(null);
+  const houseRef = useRef<THREE.Group>(null);
+  const energyFlowRef = useRef<THREE.Group>(null);
+  const cloudsRef = useRef<THREE.Group>(null);
 
   useFrame(({ clock }) => {
-    if (!ref.current || !panelsRef.current || !sunRef.current) return;
+    if (!ref.current || !panelsRef.current || !sunRef.current || !houseRef.current || !energyFlowRef.current || !cloudsRef.current) return;
     const t = clock.getElapsedTime();
     
-    // Smooth panel rotation
+    // Smooth base rotation
     ref.current.rotation.y = Math.sin(t * 0.2) * 0.15;
     
-    // Panel tilt animation
-    panelsRef.current.rotation.x = Math.sin(t * 0.5) * 0.1 + 0.3;
+    // Panel tilt animation - follows sun position
+    panelsRef.current.rotation.x = Math.sin(t * 0.2) * 0.1 + 0.3;
     
-    // Sun glow effect
+    // Sun glow and pulse effect
     if (isActive) {
-      sunRef.current.scale.setScalar(1 + Math.sin(t * 2) * 0.1);
+      sunRef.current.scale.setScalar(1 + Math.sin(t * 1.5) * 0.1);
       (sunRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 
-        1.5 + Math.sin(t * 2) * 0.5;
+        2 + Math.sin(t * 1.5) * 0.5;
     }
+
+    // House windows lighting effect
+    houseRef.current.children.forEach((window, i) => {
+      if (window instanceof THREE.Mesh) {
+        (window.material as THREE.MeshStandardMaterial).emissiveIntensity = 
+          0.5 + Math.sin(t * 1.5 + i * 0.2) * 0.3;
+      }
+    });
+
+    // Energy flow animation
+    energyFlowRef.current.children.forEach((flow, i) => {
+      flow.position.y = Math.sin(t * 2 + i * 0.5) * 0.2;
+      flow.rotation.z = t * 0.5 + i * Math.PI / 4;
+    });
+
+    // Clouds movement
+    cloudsRef.current.rotation.y = t * 0.1;
+    cloudsRef.current.children.forEach((cloud, i) => {
+      cloud.position.x = Math.sin(t * 0.2 + i * Math.PI / 4) * 2;
+      cloud.position.y = Math.cos(t * 0.2 + i * Math.PI / 4) * 0.5 + 5;
+    });
   });
 
   return (
     <Float speed={1} rotationIntensity={0.2} floatIntensity={0.5}>
       <group ref={ref} position={position}>
-        {/* Mounting Structure */}
-        <mesh position={[0, -1, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.3, 0.4, 2, 8]} />
-          <meshStandardMaterial color="#4A5568" metalness={0.7} roughness={0.3} />
+        {/* Enhanced Ground with Grass Effect */}
+        <mesh receiveShadow position={[0, -2, 0]}>
+          <cylinderGeometry args={[4, 4.2, 0.3, 32]} />
+          <meshStandardMaterial 
+            color="#4B5563"
+            metalness={0.2}
+            roughness={0.8}
+            normalScale={new THREE.Vector2(0.5, 0.5)}
+          />
         </mesh>
 
-        {/* Main Panel Frame */}
-        <group ref={panelsRef} position={[0, 0.5, 0]}>
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[4, 0.1, 3]} />
-            <meshStandardMaterial color="#2C3E50" metalness={0.9} roughness={0.1} />
+        {/* Modern House Structure */}
+        <group ref={houseRef} position={[0, 0, 0]}>
+          {/* Main Building with Better Architecture */}
+          <mesh castShadow position={[0, 0, 0]}>
+            <boxGeometry args={[3.5, 3, 3.5]} />
+            <meshStandardMaterial
+              color="#E5E7EB"
+              metalness={0.2}
+              roughness={0.8}
+              envMapIntensity={1}
+            />
           </mesh>
 
-          {/* Solar Cells Grid */}
-          {Array.from({ length: 6 }).map((_, row) =>
-            Array.from({ length: 8 }).map((_, col) => (
+          {/* Modern Slanted Roof */}
+          <mesh castShadow position={[0, 2, 0]} rotation={[0.2, 0, 0]}>
+            <boxGeometry args={[4, 0.2, 4]} />
+            <meshStandardMaterial
+              color="#4B5563"
+              metalness={0.4}
+              roughness={0.6}
+            />
+          </mesh>
+
+          {/* Smart Windows with Dynamic Lighting */}
+          {[[-1.2, 0, 1.76], [1.2, 0, 1.76], [-1.2, 1, 1.76], [1.2, 1, 1.76]].map((pos, i) => (
+            <mesh key={i} position={pos as [number, number, number]} castShadow>
+              <boxGeometry args={[0.8, 0.8, 0.1]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={isActive ? 1 : 0.2}
+                metalness={0.8}
+                roughness={0.2}
+                transparent
+                opacity={0.9}
+              />
+            </mesh>
+          ))}
+
+          {/* Modern Door */}
+          <mesh position={[0, -1, 1.76]} castShadow>
+            <boxGeometry args={[1.2, 1.8, 0.1]} />
+            <meshStandardMaterial
+              color="#4B5563"
+              metalness={0.6}
+              roughness={0.4}
+              envMapIntensity={1}
+            />
+          </mesh>
+        </group>
+
+        {/* Enhanced Solar Panel Array */}
+        <group ref={panelsRef} position={[0, 2.5, 0]}>
+          {Array.from({ length: 3 }).map((_, row) =>
+            Array.from({ length: 4 }).map((_, col) => (
               <mesh
-                key={`${row}-${col}`}
+                key={`panel-${row}-${col}`}
                 position={[
-                  (col - 3.5) * 0.45,
-                  0.1,
-                  (row - 2.5) * 0.45
+                  (col - 1.5) * 1,
+                  row * 0.1,
+                  row * 0.5
                 ]}
+                rotation={[0.3, 0, 0]}
                 castShadow
               >
-                <boxGeometry args={[0.4, 0.05, 0.4]} />
+                <boxGeometry args={[0.9, 0.05, 0.7]} />
                 <meshStandardMaterial
                   color={color}
-                  metalness={0.8}
-                  roughness={0.2}
                   emissive={color}
-                  emissiveIntensity={isActive ? 0.5 : 0.2}
+                  emissiveIntensity={0.5}
+                  metalness={0.9}
+                  roughness={0.1}
+                  envMapIntensity={2}
                 />
               </mesh>
             ))
           )}
         </group>
 
-        {/* Sun Effect */}
+        {/* Enhanced Sun with Corona Effect */}
         <mesh
           ref={sunRef}
-          position={[2, 2, -1]}
+          position={[3, 4, -2]}
           castShadow
         >
-          <sphereGeometry args={[0.5, 32, 32]} />
+          <sphereGeometry args={[0.8, 32, 32]} />
           <meshStandardMaterial
             color="#FDB813"
             emissive="#FDB813"
@@ -85,18 +161,73 @@ function SolarPanel({ position, color, isActive }: any) {
           />
         </mesh>
 
-        {/* Light Beam Effect */}
+        {/* Dynamic Energy Flow System */}
+        <group ref={energyFlowRef}>
+          {isActive && Array.from({ length: 6 }).map((_, i) => {
+            const angle = (i / 6) * Math.PI * 2;
+            return (
+              <mesh
+                key={i}
+                position={[
+                  Math.cos(angle) * 2,
+                  1,
+                  Math.sin(angle) * 2
+                ]}
+                rotation={[0, angle, Math.PI / 6]}
+              >
+                <cylinderGeometry args={[0.05, 0.15, 2, 8]} />
+                <meshStandardMaterial
+                  color={color}
+                  transparent
+                  opacity={0.3}
+                  emissive={color}
+                  emissiveIntensity={0.5}
+                />
+              </mesh>
+            );
+          })}
+        </group>
+
+        {/* Decorative Clouds */}
+        <group ref={cloudsRef}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <mesh
+              key={i}
+              position={[
+                Math.sin(i * Math.PI / 2.5) * 3,
+                4 + Math.cos(i * Math.PI / 2.5) * 0.5,
+                Math.cos(i * Math.PI / 2.5) * 3
+              ]}
+            >
+              <sphereGeometry args={[0.4, 16, 16]} />
+              <meshStandardMaterial
+                color="white"
+                transparent
+                opacity={0.8}
+                roughness={1}
+              />
+            </mesh>
+          ))}
+        </group>
+
+        {/* Enhanced Ambient Lighting */}
         {isActive && (
-          <mesh position={[1, 1, 0]} rotation={[0, 0, Math.PI / 4]}>
-            <cylinderGeometry args={[0.1, 0.3, 2, 8]} />
-            <meshStandardMaterial
+          <>
+            <pointLight
+              position={[0, 4, 0]}
               color={color}
-              transparent
-              opacity={0.2}
-              emissive={color}
-              emissiveIntensity={0.5}
+              intensity={1}
+              distance={8}
+              decay={2}
             />
-          </mesh>
+            <pointLight
+              position={[3, 4, -2]}
+              color="#FDB813"
+              intensity={2}
+              distance={10}
+              decay={2}
+            />
+          </>
         )}
       </group>
     </Float>

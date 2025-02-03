@@ -18,6 +18,11 @@ import {
 } from 'recharts';
 import { ComparisonData } from '../../types/calculator';
 import { ChartTypeSwitcher, ChartType } from './ChartTypeSwitcher';
+import { useWindowSize } from '../../utils/hooks';
+
+const generateUniqueKey = (prefix: string, value: number, index: number): string => {
+  return `${prefix}-${value}-${index}`;
+};
 
 interface ComparisonChartProps {
   data: ComparisonData[];
@@ -40,62 +45,100 @@ const BrushAnalysis: React.FC<{
     return null;
   }
 
-  const totalWithoutSolar = selectedData.reduce((sum, d) => sum + (d?.withoutSolar || 0), 0);
-  const totalWithSolar = selectedData.reduce((sum, d) => sum + (d?.withSolar || 0), 0);
-  const totalEmi = showEmi ? selectedData.reduce((sum, d) => sum + (d?.emiPayment || 0), 0) : 0;
+  const totalWithoutSolar = selectedData.reduce((sum, d) => sum + d.withoutSolar, 0);
+  const totalWithSolar = selectedData.reduce((sum, d) => sum + d.withSolar, 0);
+  const totalEmi = showEmi ? selectedData.reduce((sum, d) => sum + (d.emiPayment || 0), 0) : 0;
+  const totalSavings = totalWithoutSolar - (totalWithSolar + totalEmi);
 
   const endSavings = selectedData[selectedData.length - 1]?.cumulativeSavings || 0;
   const startSavings = startIndex > 0 && data[startIndex - 1] 
     ? data[startIndex - 1].cumulativeSavings 
     : 0;
-
   const netSavings = endSavings - startSavings;
-  const avgSavingsPerYear = selectedData.length > 0 ? netSavings / selectedData.length : 0;
 
-  const startValue = selectedData[0]?.cumulativeSavings || 0;
-  const endValue = selectedData[selectedData.length - 1]?.cumulativeSavings || 0;
-  const savingsGrowthRate = startValue !== 0 
-    ? ((endValue / startValue) - 1) * 100 
+  const yearsSelected = selectedData.length;
+  const avgYearlySavings = yearsSelected > 0 ? netSavings / yearsSelected : 0;
+  const avgYearlyWithoutSolar = totalWithoutSolar / yearsSelected;
+  const avgYearlyWithSolar = (totalWithSolar + totalEmi) / yearsSelected;
+
+  const initialInvestment = Math.abs(data[0]?.cumulativeSavings || 0);
+  const roi = initialInvestment !== 0 
+    ? ((totalSavings - initialInvestment) / initialInvestment) * 100 
     : 0;
 
+  const yearsToBreakEven = data.findIndex(d => d.cumulativeSavings > 0) + 1;
+
   return (
-    <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-      <div className="grid grid-cols-2 gap-4 mb-4">
+    <div className="p-6 rounded-xl bg-gray-800/70 backdrop-blur-sm border border-yellow-500/20 shadow-lg">
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="text-sm">
-          <div className="font-medium text-slate-400 mb-1">Selected Period</div>
-          <div className="font-bold text-slate-200">Year {startIndex + 1} - {endIndex + 1}</div>
+          <div className="font-medium text-gray-400 mb-2">Analysis Period</div>
+          <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
+            Year {startIndex + 1} - {endIndex + 1}
+          </div>
         </div>
         <div className="text-sm text-right">
-          <div className="font-medium text-slate-400 mb-1">Net Savings</div>
-          <div className="font-bold text-green-400">₹{netSavings.toLocaleString()}</div>
+          <div className="font-medium text-gray-400 mb-2">Total Savings</div>
+          <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
+            ₹{totalSavings.toLocaleString()}
+          </div>
         </div>
       </div>
       
-      <div className="grid grid-cols-3 gap-3 text-xs mb-3">
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="text-slate-400 mb-1">Without Solar</div>
-          <div className="font-bold text-slate-200">₹{totalWithoutSolar.toLocaleString()}</div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+          <div className="text-gray-400 mb-2 text-sm">Without Solar</div>
+          <div className="font-bold text-red-400 text-lg">₹{totalWithoutSolar.toLocaleString()}</div>
+          <div className="text-gray-500 text-xs mt-2">
+            Avg: ₹{avgYearlyWithoutSolar.toFixed(0)}/year
+          </div>
         </div>
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="text-slate-400 mb-1">With Solar</div>
-          <div className="font-bold text-slate-200">₹{totalWithSolar.toLocaleString()}</div>
+        <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+          <div className="text-gray-400 mb-2 text-sm">With Solar</div>
+          <div className="font-bold text-green-400 text-lg">₹{totalWithSolar.toLocaleString()}</div>
+          <div className="text-gray-500 text-xs mt-2">
+            Avg: ₹{avgYearlyWithSolar.toFixed(0)}/year
+          </div>
         </div>
         {showEmi && (
-          <div className="p-3 bg-slate-700/50 rounded-lg">
-            <div className="text-slate-400 mb-1">EMI Total</div>
-            <div className="font-bold text-slate-200">₹{totalEmi.toLocaleString()}</div>
+          <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+            <div className="text-gray-400 mb-2 text-sm">EMI Total</div>
+            <div className="font-bold text-blue-400 text-lg">₹{totalEmi.toLocaleString()}</div>
+            <div className="text-gray-500 text-xs mt-2">
+              For first {Math.min(5, yearsSelected)} years
+            </div>
           </div>
         )}
       </div>
       
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="text-slate-400 mb-1">Avg. Yearly Savings</div>
-          <div className="font-bold text-slate-200">₹{avgSavingsPerYear.toLocaleString()}</div>
+      <div className="grid grid-cols-4 gap-4">
+        <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+          <div className="text-gray-400 mb-2 text-sm">Avg. Yearly Savings</div>
+          <div className="font-bold text-green-400">₹{avgYearlySavings.toLocaleString()}</div>
+          <div className="text-gray-500 text-xs mt-2">
+            Per year average
+          </div>
         </div>
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="text-slate-400 mb-1">Savings Growth</div>
-          <div className="font-bold text-slate-200">{savingsGrowthRate.toFixed(1)}%</div>
+        <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+          <div className="text-gray-400 mb-2 text-sm">Net Savings</div>
+          <div className="font-bold text-yellow-400">₹{netSavings.toLocaleString()}</div>
+          <div className="text-gray-500 text-xs mt-2">
+            Total for period
+          </div>
+        </div>
+        <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+          <div className="text-gray-400 mb-2 text-sm">ROI</div>
+          <div className="font-bold text-blue-400">{roi.toFixed(2)}%</div>
+          <div className="text-gray-500 text-xs mt-2">
+            Return on investment
+          </div>
+        </div>
+        <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/10 hover:border-yellow-500/30 transition-colors duration-300">
+          <div className="text-gray-400 mb-2 text-sm">Break Even</div>
+          <div className="font-bold text-purple-400">Year {yearsToBreakEven}</div>
+          <div className="text-gray-500 text-xs mt-2">
+            Full system payback
+          </div>
         </div>
       </div>
     </div>
@@ -104,47 +147,44 @@ const BrushAnalysis: React.FC<{
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const totalAmount = payload.reduce((sum: number, entry: any) => 
-      sum + Math.abs(entry.value), 0
-    );
+    const withoutSolar = payload.find((p: any) => p.name === 'Without Solar')?.value || 0;
+    const withSolar = payload.find((p: any) => p.name === 'With Solar')?.value || 0;
+    const emiPayment = payload.find((p: any) => p.name === 'EMI Payment')?.value || 0;
+    const cumulativeSavings = payload.find((p: any) => p.name === 'Cumulative Savings')?.value || 0;
+    
+    const totalCost = withSolar + emiPayment;
+    const yearlyBenefit = withoutSolar - totalCost;
 
     return (
-      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-100">
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-          <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+      <div className="bg-gray-800/95 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-yellow-500/20">
+        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-700">
+          <div className="w-2 h-2 rounded-full bg-yellow-500 animate-[pulse_1.5s_ease-in-out_infinite]"></div>
+          <span className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
             Year {label}
           </span>
         </div>
-        <div className="space-y-2.5">
-          {payload.map((entry: any, index: number) => (
-            <div 
-              key={index} 
-              className="flex justify-between gap-4 text-sm items-center hover:bg-gray-50 p-2 rounded-lg"
-            >
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{ 
-                    backgroundColor: entry.color,
-                    boxShadow: `0 0 8px ${entry.color}60`
-                  }}
-                />
-                <span className="text-gray-600 font-medium">{entry.name}:</span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="font-semibold">
-                  ₹{Math.abs(entry.value).toLocaleString()}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {((Math.abs(entry.value) / totalAmount) * 100).toFixed(1)}%
-                </span>
-              </div>
+        <div className="space-y-3">
+          <div className="flex justify-between gap-6 text-sm items-center p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-200">
+            <span className="text-gray-300 font-medium">Without Solar:</span>
+            <span className="font-semibold text-red-400">₹{withoutSolar.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between gap-6 text-sm items-center p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-200">
+            <span className="text-gray-300 font-medium">With Solar:</span>
+            <span className="font-semibold text-green-400">₹{withSolar.toLocaleString()}</span>
+          </div>
+          {emiPayment > 0 && (
+            <div className="flex justify-between gap-6 text-sm items-center p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-200">
+              <span className="text-gray-300 font-medium">EMI Payment:</span>
+              <span className="font-semibold text-blue-400">₹{emiPayment.toLocaleString()}</span>
             </div>
-          ))}
-        </div>
-        <div className="mt-3 pt-2 border-t border-gray-100">
-          <div className="text-sm font-medium text-gray-600">
-            Total: ₹{totalAmount.toLocaleString()}
+          )}
+          <div className="flex justify-between gap-6 text-sm items-center p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-200">
+            <span className="text-gray-300 font-medium">Yearly Benefit:</span>
+            <span className="font-semibold text-yellow-400">₹{yearlyBenefit.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between gap-6 text-sm items-center p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-200 border-t border-gray-700 mt-3 pt-3">
+            <span className="text-gray-300 font-medium">Cumulative Savings:</span>
+            <span className="font-semibold text-purple-400">₹{cumulativeSavings.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -158,18 +198,14 @@ const CustomLegend = ({ payload }: any) => {
     <div className="flex flex-wrap justify-center gap-4 mb-6">
       {payload?.map((entry: any, index: number) => (
         <div
-          key={index}
-          className="flex items-center gap-2 px-4 py-2 rounded-full"
-          style={{ 
-            backgroundColor: `${entry.color}10`,
-            boxShadow: `0 2px 8px ${entry.color}20`
-          }}
+          key={generateUniqueKey('legend', index, 0)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/70 backdrop-blur-sm border border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 hover:scale-105"
         >
           <div 
             className="w-3 h-3 rounded-full"
             style={{ 
               backgroundColor: entry.color,
-              boxShadow: `0 0 8px ${entry.color}60`
+              boxShadow: `0 0 10px ${entry.color}60`
             }}
           />
           <span 
@@ -191,6 +227,30 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
     startIndex: 0,
     endIndex: Math.min(5, data.length - 1)
   });
+  const windowSize = useWindowSize();
+
+  const getMargins = () => {
+    if (windowSize.width < 640) {
+      return { top: 10, right: 10, left: 40, bottom: 40 };
+    } else if (windowSize.width < 1024) {
+      return { top: 15, right: 20, left: 50, bottom: 45 };
+    }
+    return { top: 20, right: 30, left: 60, bottom: 50 };
+  };
+
+  const getFontSize = () => {
+    if (windowSize.width < 640) return 10;
+    if (windowSize.width < 1024) return 12;
+    return 14;
+  };
+
+  const getChartHeight = () => {
+    const containerHeight = windowSize.height;
+    if (containerHeight < 600) return 300;
+    if (containerHeight < 800) return 400;
+    if (containerHeight < 1000) return 500;
+    return 600;
+  };
 
   const breakEvenYear = data.findIndex(d => d.cumulativeSavings > 0) + 1;
 
@@ -225,7 +285,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
 
   const commonProps = {
     data,
-    margin: { top: 20, right: 30, left: 60, bottom: 50 },
+    margin: getMargins(),
     className: "transition-all duration-500 ease-in-out",
     onMouseEnter: () => handleMouseEnter('all'),
     onMouseLeave: handleMouseLeave,
@@ -236,9 +296,10 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
       <XAxis 
         dataKey="year" 
         stroke="#64748b"
-        tick={{ fill: '#64748b', fontSize: 12 }}
+        tick={{ fill: '#64748b', fontSize: getFontSize() }}
         tickLine={{ stroke: '#64748b' }}
         axisLine={{ stroke: '#cbd5e1' }}
+        minTickGap={windowSize.width < 640 ? 10 : 30}
       >
         <Label
           value="Years"
@@ -246,7 +307,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
           offset={-5}
           style={{ 
             fill: '#64748b',
-            fontSize: 12,
+            fontSize: getFontSize(),
             fontWeight: 500,
             letterSpacing: '0.05em'
           }}
@@ -256,10 +317,11 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
     yAxis: (
       <YAxis 
         stroke="#64748b"
-        tick={{ fill: '#64748b', fontSize: 12 }}
+        tick={{ fill: '#64748b', fontSize: getFontSize() }}
         tickLine={{ stroke: '#64748b' }}
         axisLine={{ stroke: '#cbd5e1' }}
         tickFormatter={(value) => `₹${(value/1000).toFixed(0)}K`}
+        width={windowSize.width < 640 ? 45 : 60}
       >
         <Label
           value="Amount (₹)"
@@ -268,7 +330,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
           offset={10}
           style={{ 
             fill: '#64748b',
-            fontSize: 12,
+            fontSize: getFontSize(),
             fontWeight: 500,
             letterSpacing: '0.05em'
           }}
@@ -280,8 +342,15 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
   const commonChartElements = (
     <>
       <defs>
-        {Object.entries(chartColors).map(([key, color]) => (
-          <linearGradient key={key} id={`color${key}Yearly`} x1="0" y1="0" x2="0" y2="1">
+        {Object.entries(chartColors).map(([key, color], index) => (
+          <linearGradient 
+            key={`gradient-yearly-${key}-${index}`} 
+            id={`color${key}Yearly`} 
+            x1="0" 
+            y1="0" 
+            x2="0" 
+            y2="1"
+          >
             <stop offset="5%" stopColor={color} stopOpacity={0.4}/>
             <stop offset="95%" stopColor={color} stopOpacity={0.1}/>
           </linearGradient>
@@ -290,7 +359,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
       
       <CartesianGrid 
         strokeDasharray="3 3" 
-        stroke="#e5e7eb" 
+        stroke="#334155" 
         opacity={0.5}
         vertical={false}
       />
@@ -301,7 +370,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
       <Tooltip 
         content={<CustomTooltip />}
         cursor={{ 
-          stroke: '#94a3b8', 
+          stroke: '#475569', 
           strokeWidth: 1, 
           strokeDasharray: '5 5',
           radius: 4
@@ -319,12 +388,12 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
       {breakEvenYear && (
         <ReferenceLine
           x={breakEvenYear}
-          stroke="#16a34a"
+          stroke="#22c55e"
           strokeDasharray="3 3"
           label={{
             value: `Break Even: Year ${breakEvenYear}`,
             position: 'top',
-            fill: '#16a34a',
+            fill: '#22c55e',
             fontSize: 12,
             fontWeight: 'bold',
             dy: -20
@@ -334,15 +403,15 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
       
       <ReferenceLine 
         y={0} 
-        stroke="#94a3b8" 
+        stroke="#475569" 
         strokeWidth={1}
       />
 
       <Brush
         dataKey="year"
         height={40}
-        stroke="#94a3b8"
-        fill="#f8fafc"
+        stroke="#475569"
+        fill="#1e293b"
         tickFormatter={(value) => `Year ${value}`}
         startIndex={brushIndices.startIndex}
         endIndex={brushIndices.endIndex}
@@ -354,6 +423,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
             dataKey="cumulativeSavings" 
             fill={chartColors.savings} 
             radius={[2, 2, 0, 0]}
+            key="brush-bar"
           />
         </BarChart>
       </Brush>
@@ -372,13 +442,13 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
       fill: color,
       r: 4,
       strokeWidth: 2,
-      stroke: '#fff',
+      stroke: '#1e293b',
     });
 
     const activeDotProps = (color: string) => ({
       r: 6,
       strokeWidth: 2,
-      stroke: '#fff',
+      stroke: '#1e293b',
       fill: color,
     });
 
@@ -449,6 +519,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
           <>
             <Bar
               {...commonSeriesProps}
+              key={generateUniqueKey('bar-withoutSolar', 0, 0)}
               dataKey="withoutSolar"
               name="Without Solar"
               fill={chartColors.withoutSolar}
@@ -460,6 +531,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
             />
             <Bar
               {...commonSeriesProps}
+              key={generateUniqueKey('bar-withSolar', 0, 1)}
               dataKey="withSolar"
               name="With Solar"
               fill={chartColors.withSolar}
@@ -472,6 +544,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
             {showEmi && (
               <Bar
                 {...commonSeriesProps}
+                key={generateUniqueKey('bar-emiPayment', 0, 2)}
                 dataKey="emiPayment"
                 name="EMI Payment"
                 fill={chartColors.emiPayment}
@@ -484,6 +557,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
             )}
             <Bar
               {...commonSeriesProps}
+              key={generateUniqueKey('bar-cumulativeSavings', 0, 3)}
               dataKey="cumulativeSavings"
               name="Cumulative Savings"
               fill={chartColors.savings}
@@ -498,7 +572,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
 
       case 'line':
         return (
-          <LineChart {...commonProps}>
+          <>
             <Line
               {...commonSeriesProps}
               type="monotone"
@@ -550,7 +624,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
               onMouseEnter={() => handleMouseEnter('cumulativeSavings')}
               onMouseLeave={handleMouseLeave}
             />
-          </LineChart>
+          </>
         );
 
       case 'composed':
@@ -558,6 +632,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
           <>
             <Bar
               {...commonSeriesProps}
+              key={generateUniqueKey('composed-bar-withoutSolar', 0, 0)}
               dataKey="withoutSolar"
               name="Without Solar"
               fill={chartColors.withoutSolar}
@@ -569,6 +644,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
             />
             <Bar
               {...commonSeriesProps}
+              key={generateUniqueKey('composed-bar-withSolar', 0, 1)}
               dataKey="withSolar"
               name="With Solar"
               fill={chartColors.withSolar}
@@ -610,14 +686,30 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
     }
   };
 
+  const renderChart = () => {
+    if (chartType === 'line') {
+      return (
+        <LineChart {...commonProps}>
+          {commonChartElements}
+          {renderChartElements()}
+        </LineChart>
+      );
+    }
+    return (
+      <ComposedChart {...commonProps}>
+        {commonChartElements}
+        {renderChartElements()}
+      </ComposedChart>
+    );
+  };
+
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="mb-6">
+      <div className="mb-2 sm:mb-4">
         <ChartTypeSwitcher value={chartType} onChange={setChartType} />
       </div>
       
-      {/* Analysis Panel */}
-      <div className="mb-6">
+      <div className="mb-2 sm:mb-4">
         <BrushAnalysis
           data={data}
           startIndex={brushIndices.startIndex}
@@ -626,20 +718,9 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, showEmi 
         />
       </div>
 
-      {/* Chart Container */}
-      <div className="flex-1 min-h-[400px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          {chartType === 'line' ? (
-            <LineChart {...commonProps}>
-              {commonChartElements}
-              {renderChartElements()}
-            </LineChart>
-          ) : (
-            <ComposedChart {...commonProps}>
-              {commonChartElements}
-              {renderChartElements()}
-            </ComposedChart>
-          )}
+      <div className="flex-1 min-h-0 relative bg-gray-900/30 backdrop-blur-sm rounded-xl border border-yellow-500/20 p-2 sm:p-4">
+        <ResponsiveContainer width="100%" height={getChartHeight()}>
+          {renderChart()}
         </ResponsiveContainer>
       </div>
     </div>

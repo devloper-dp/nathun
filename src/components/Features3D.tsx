@@ -9,24 +9,35 @@ function FeatureModel({ position, color, isActive }: any) {
   const ref = useRef<THREE.Group>(null);
   const coreRef = useRef<THREE.Mesh>(null);
   const ringsRef = useRef<THREE.Group>(null);
+  const iconsRef = useRef<THREE.Group>(null);
+  const beamsRef = useRef<THREE.Group>(null);
 
   useFrame(({ clock }) => {
-    if (!ref.current || !coreRef.current || !ringsRef.current) return;
+    if (!ref.current || !coreRef.current || !ringsRef.current || !iconsRef.current || !beamsRef.current) return;
     const t = clock.getElapsedTime();
     
-    // Smooth base rotation
+    // Base rotation
     ref.current.rotation.y = Math.sin(t * 0.2) * 0.15;
     
-    // Core pulsing effect
+    // Core pulsing
     if (isActive) {
       coreRef.current.scale.setScalar(1 + Math.sin(t * 2) * 0.1);
       (coreRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 
-        1 + Math.sin(t * 2) * 0.3;
+        1.5 + Math.sin(t * 2) * 0.5;
     }
     
-    // Rotating rings
+    // Rings rotation
     ringsRef.current.rotation.y = t * 0.5;
     ringsRef.current.rotation.x = Math.sin(t * 0.3) * 0.2;
+
+    // Icons orbit
+    iconsRef.current.rotation.y = t * 0.2;
+
+    // Beams movement
+    beamsRef.current.children.forEach((beam, i) => {
+      beam.position.y = Math.sin(t * 1.5 + i * 0.5) * 0.2;
+      beam.rotation.z = Math.sin(t * 0.5 + i * 0.3) * 0.1;
+    });
   });
 
   return (
@@ -34,31 +45,39 @@ function FeatureModel({ position, color, isActive }: any) {
       <group ref={ref} position={position}>
         {/* Base Platform */}
         <mesh receiveShadow>
-          <cylinderGeometry args={[1.5, 1.8, 0.2, 8]} />
+          <cylinderGeometry args={[2, 2.2, 0.3, 8]} />
           <meshStandardMaterial color="#1A202C" metalness={0.8} roughness={0.2} />
         </mesh>
 
-        {/* Central Core */}
-        <mesh ref={coreRef} position={[0, 1.5, 0]} castShadow>
-          <sphereGeometry args={[0.6, 32, 32]} />
+        {/* Central Column */}
+        <mesh position={[0, 1.5, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.4, 3, 16]} />
+          <meshStandardMaterial color={color} metalness={0.7} roughness={0.3} />
+        </mesh>
+
+        {/* Core Sphere */}
+        <mesh ref={coreRef} position={[0, 3, 0]} castShadow>
+          <sphereGeometry args={[0.8, 32, 32]} />
           <meshStandardMaterial
             color={color}
             emissive={color}
-            emissiveIntensity={isActive ? 0.8 : 0.3}
+            emissiveIntensity={isActive ? 1.5 : 0.5}
             metalness={0.9}
             roughness={0.1}
+            transparent
+            opacity={0.9}
           />
         </mesh>
 
-        {/* Feature Rings */}
-        <group ref={ringsRef} position={[0, 1.5, 0]}>
+        {/* Orbiting Rings */}
+        <group ref={ringsRef} position={[0, 3, 0]}>
           {Array.from({ length: 3 }).map((_, i) => (
             <mesh
               key={i}
               rotation={[Math.PI / 4 * i, Math.PI / 3 * i, 0]}
               castShadow
             >
-              <torusGeometry args={[1 + i * 0.2, 0.05, 16, 32]} />
+              <torusGeometry args={[1.2 + i * 0.2, 0.05, 16, 32]} />
               <meshStandardMaterial
                 color={color}
                 transparent
@@ -71,31 +90,78 @@ function FeatureModel({ position, color, isActive }: any) {
         </group>
 
         {/* Feature Icons */}
-        {Array.from({ length: 6 }).map((_, i) => {
-          const angle = (i / 6) * Math.PI * 2;
-          return (
-            <group
-              key={i}
-              position={[
-                Math.cos(angle) * 1.2,
-                1,
-                Math.sin(angle) * 1.2
-              ]}
-              rotation={[0, -angle, 0]}
-            >
-              <mesh castShadow>
-                <boxGeometry args={[0.3, 0.3, 0.3]} />
+        <group ref={iconsRef} position={[0, 3, 0]}>
+          {Array.from({ length: 6 }).map((_, i) => {
+            const angle = (i / 6) * Math.PI * 2;
+            return (
+              <group
+                key={i}
+                position={[
+                  Math.cos(angle) * 1.8,
+                  Math.sin(angle) * 0.5,
+                  Math.sin(angle) * 1.8
+                ]}
+              >
+                <mesh castShadow>
+                  <boxGeometry args={[0.4, 0.4, 0.4]} />
+                  <meshStandardMaterial
+                    color={color}
+                    emissive={color}
+                    emissiveIntensity={0.5}
+                    metalness={0.8}
+                    roughness={0.2}
+                  />
+                </mesh>
+                {isActive && (
+                  <pointLight
+                    color={color}
+                    intensity={0.5}
+                    distance={2}
+                    decay={2}
+                  />
+                )}
+              </group>
+            );
+          })}
+        </group>
+
+        {/* Energy Beams */}
+        <group ref={beamsRef}>
+          {isActive && Array.from({ length: 4 }).map((_, i) => {
+            const angle = (i / 4) * Math.PI * 2;
+            return (
+              <mesh
+                key={i}
+                position={[
+                  Math.cos(angle) * 1.2,
+                  2,
+                  Math.sin(angle) * 1.2
+                ]}
+                rotation={[0, angle, Math.PI / 4]}
+              >
+                <cylinderGeometry args={[0.05, 0.15, 1.5, 8]} />
                 <meshStandardMaterial
                   color={color}
+                  transparent
+                  opacity={0.3}
                   emissive={color}
                   emissiveIntensity={0.5}
-                  metalness={0.8}
-                  roughness={0.2}
                 />
               </mesh>
-            </group>
-          );
-        })}
+            );
+          })}
+        </group>
+
+        {/* Base Glow */}
+        {isActive && (
+          <pointLight
+            position={[0, 0.5, 0]}
+            color={color}
+            intensity={1}
+            distance={3}
+            decay={2}
+          />
+        )}
       </group>
     </Float>
   );

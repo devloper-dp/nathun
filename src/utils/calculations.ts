@@ -1,165 +1,170 @@
 import { SolarCalculation, LoanCalculation, ComparisonData, DailyProfitLoss } from '../types/calculator';
 
-const UNIT_PRICE = 9; // ₹9 per unit
-const COST_PER_KW = 90000; // Cost per kW of solar installation
-const BASE_GENERATION = 3.8; // Average daily generation units per 1kW (considering 365 days average)
-const MAX_GENERATION = 4.2; // Maximum daily generation units per 1kW (on optimal days)
-const YEARLY_MAINTENANCE = 0.01; // 1% of total cost per year for maintenance
-// const MAX_SUBSIDY = 78000; // Maximum government subsidy
+// Constants
+const UNIT_PRICE = 8; // ₹8 per unit
+const DAILY_GENERATION_FACTOR = 4.1;
+const DAYS_PER_MONTH = 30.5;
+const ANNUAL_MAINTENANCE_COST = 2400; // ₹2,400 per year
 
-const calculateBreakEvenPoint = (
-  fixedCosts: number,
-  sellingPricePerUnit: number,
-  variableCostPerUnit: number,
-  maintenanceCost: number
-) => {
-  const effectiveFixedCosts = fixedCosts;
-  const effectiveVariableCost = variableCostPerUnit + maintenanceCost;
-  
-  const bepUnits = effectiveFixedCosts / (sellingPricePerUnit - effectiveVariableCost);
-  const bepSales = bepUnits * sellingPricePerUnit;
+const PLANT_COSTS = {
+  3: 200000, // ₹2,00,000
+  4: 250000, // ₹2,50,000
+  5: 275000  // ₹2,75,000
+} as const;
 
-  const daysToBreakEven = Math.ceil(bepUnits / (BASE_GENERATION * Math.ceil(bepUnits / BASE_GENERATION)));
+// Subsidy calculation
+const getSubsidy = (capacity: number): number => {
+  if (capacity <= 1) return 30000;
+  if (capacity <= 2) return 60000;
+  if (capacity <= 3) return 78000;
+  return 78000; // Max subsidy
+};
 
-  return {
-    units: bepUnits,
-    sales: bepSales,
-    daysToBreakEven
-  };
+// Calculate required capacity based on monthly bill
+const calculateRequiredCapacity = (monthlyBill: number): number => {
+  const requiredKW = (monthlyBill * 1.20) / (UNIT_PRICE * DAILY_GENERATION_FACTOR * DAYS_PER_MONTH);
+  return roundOffPlantSize(requiredKW);
+};
+
+// Round off plant size according to specified ranges
+const roundOffPlantSize = (calculatedSize: number): number => {
+  if (calculatedSize >= 3.1 && calculatedSize <= 3.3) return 3;
+  if (calculatedSize >= 3.3 && calculatedSize <= 3.5) return 3.5;
+  if (calculatedSize >= 3.6 && calculatedSize <= 3.9) return 4;
+  return Math.ceil(calculatedSize);
+};
+
+// Get plant cost based on capacity
+const getPlantCost = (capacity: number): number => {
+  if (capacity <= 3) return PLANT_COSTS[3];
+  if (capacity <= 4) return PLANT_COSTS[4];
+  return PLANT_COSTS[5];
 };
 
 export const calculateSolarDetails = (monthlyBill: number): SolarCalculation => {
-  const unitsPerDay = monthlyBill / (30 * UNIT_PRICE);
-  const requiredCapacity = Math.ceil(unitsPerDay / BASE_GENERATION);
-  
-  const dailyGeneration = requiredCapacity * BASE_GENERATION;
-  const maxDailyGeneration = requiredCapacity * MAX_GENERATION;
-  
-  const monthlySavings = dailyGeneration * 30 * UNIT_PRICE;
-  const annualSavings = monthlySavings * 12;
-  
-  // Calculate subsidy based on capacity with exact values
-  let subsidy = 0;
-  if (requiredCapacity <= 1) {
-    subsidy = 30000; // 1kW subsidy
-  } else if (requiredCapacity <= 2) {
-    subsidy = 60000; // 2kW subsidy
-  } else if (requiredCapacity <= 3) {
-    subsidy = 78000; // 3kW subsidy
-  } else {
-    subsidy = 78000; // More than 3kW subsidy capped at 78000
-  }
-
-  const totalCost = requiredCapacity * COST_PER_KW;
+  const requiredCapacity = calculateRequiredCapacity(monthlyBill);
+  const totalCost = getPlantCost(requiredCapacity);
+  const subsidy = getSubsidy(requiredCapacity);
   const costAfterSubsidy = totalCost - subsidy;
   
-  const annualMaintenance = totalCost * YEARLY_MAINTENANCE;
-  const dailyMaintenance = annualMaintenance / 365;
+  const dailyGeneration = requiredCapacity * DAILY_GENERATION_FACTOR;
+  const monthlyGeneration = dailyGeneration * DAYS_PER_MONTH;
+  const monthlyGenerationValue = monthlyGeneration * UNIT_PRICE;
   
-  const co2Reduction = dailyGeneration * 0.85 * 365;
+  const monthlySavings = monthlyGenerationValue - monthlyBill;
+  const annualSavings = monthlySavings * 12;
+  const co2Reduction = monthlyGeneration * 0.85 * 12;
 
-  const breakEvenPoint = calculateBreakEvenPoint(
-    costAfterSubsidy,
-    UNIT_PRICE,
-    0,
-    dailyMaintenance / dailyGeneration
-  );
-  
   return {
     monthlyBill,
     requiredCapacity,
     dailyGeneration,
-    maxDailyGeneration,
     monthlySavings,
     annualSavings,
     subsidy,
     costAfterSubsidy,
     co2Reduction,
-    breakEvenPoint,
-    totalCost
+    totalCost,
+    monthlyGeneration,
+    yearlyGeneration: monthlyGeneration * 12,
+    breakEvenPoint: {
+      daysToBreakEven: Math.ceil(costAfterSubsidy / (monthlyBill / 30))
+    }
   };
 };
 
 export const calculateLoan = (
-  principal: number,
-  interestRate: number,
-  tenure: number,
+  totalCost: number,
+  interestRate: number = 7.5,
+  tenure: number = 5,
   monthlyBill: number
 ): LoanCalculation => {
+  const deposit = totalCost * 0.20;
+  const requiredCapacity = calculateRequiredCapacity(monthlyBill);
+  const subsidy = getSubsidy(requiredCapacity);
+  const loanAmount = totalCost - deposit - subsidy;
+
   const monthlyRate = interestRate / (12 * 100);
-  const numberOfPayments = tenure * 12;
-  
-  const emi =
-    (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
-    (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
-  
-  const totalAmount = emi * numberOfPayments;
-  const totalInterest = totalAmount - principal;
-  const monthlyBillSavings = monthlyBill;
-  const netMonthlyCost = emi - monthlyBillSavings;
+  const totalMonths = tenure * 12;
+  const emi = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
+              (Math.pow(1 + monthlyRate, totalMonths) - 1);
+
+  const totalAmount = emi * totalMonths;
+  const totalInterest = totalAmount - loanAmount;
 
   return {
-    principal,
+    principal: loanAmount,
     interestRate,
     tenure,
     emi,
     totalInterest,
     totalAmount,
-    monthlyBillSavings,
-    netMonthlyCost
+    netMonthlyCost: emi,
+    deposit,
   };
 };
 
+
 export const generateComparisonData = (
   monthlyBill: number,
-  years: number,
+  years: number = 10,
   loanDetails?: LoanCalculation
 ): ComparisonData[] => {
-  const annualBill = monthlyBill * 12;
-  const yearlyIncrease = 0.05; // 5% yearly increase in electricity costs
-  const solarCalculation = calculateSolarDetails(monthlyBill);
-  const annualMaintenance = solarCalculation.totalCost * YEARLY_MAINTENANCE;
+  const solarDetails = calculateSolarDetails(monthlyBill);
   
   return Array.from({ length: years }, (_, i) => {
-    const withoutSolar = annualBill * Math.pow(1 + yearlyIncrease, i);
-    const withSolar = i === 0 ? solarCalculation.costAfterSubsidy : annualMaintenance;
+    const withoutSolar = monthlyBill * 12;
+    const withSolar = ANNUAL_MAINTENANCE_COST;
     const emiPayment = loanDetails && i < loanDetails.tenure ? loanDetails.emi * 12 : 0;
     
     const previousYearsSavings = i > 0 
-      ? Array.from({ length: i }, (_, j) => 
-          (annualBill * Math.pow(1 + yearlyIncrease, j)) - 
-          (j === 0 ? solarCalculation.costAfterSubsidy : annualMaintenance) - 
-          (loanDetails && j < loanDetails.tenure ? loanDetails.emi * 12 : 0)
-        ).reduce((sum, val) => sum + val, 0)
-      : 0;
+      ? Array.from({ length: i }, (_, j) => {
+          const yearlyBill = monthlyBill * 12;
+          const yearlyEmi = loanDetails && j < loanDetails.tenure ? loanDetails.emi * 12 : 0;
+          return yearlyBill - yearlyEmi - ANNUAL_MAINTENANCE_COST;
+        }).reduce((sum, val) => sum + val, 0)
+      : -solarDetails.costAfterSubsidy;
 
-    const currentYearSavings = withoutSolar - withSolar - emiPayment;
+    const currentYearSavings = withoutSolar - emiPayment - withSolar;
     const cumulativeSavings = previousYearsSavings + currentYearSavings;
-    
+
     return {
       year: i + 1,
       withoutSolar,
       withSolar,
       emiPayment: loanDetails ? emiPayment : undefined,
-      cumulativeSavings
+      cumulativeSavings,
+      efficiency: Math.pow(0.993, i), // 0.7% annual degradation
+      maintenanceCost: ANNUAL_MAINTENANCE_COST,
+      carbonSaved: solarDetails.co2Reduction * Math.pow(0.993, i)
     };
   });
 };
 
 export const generateDailyProfitLoss = (
   monthlyBill: number,
-  days: number
+  days: number = 365
 ): DailyProfitLoss[] => {
   const solarDetails = calculateSolarDetails(monthlyBill);
-  const dailyBillWithoutSolar = monthlyBill / 30;
-  const dailySavings = solarDetails.dailyGeneration * UNIT_PRICE;
-  const dailyMaintenance = (solarDetails.totalCost * YEARLY_MAINTENANCE) / 365;
+  const dailyBillWithoutSolar = monthlyBill / DAYS_PER_MONTH;
+  const dailyMaintenanceCost = ANNUAL_MAINTENANCE_COST / 365;
+  
+  return Array.from({ length: days }, (_, i) => {
+    const day = i + 1;
+    const withoutSolar = dailyBillWithoutSolar;
+    const withSolar = dailyMaintenanceCost;
+    const profit = withoutSolar - withSolar;
+    const cumulativeSavings = (profit * day) - solarDetails.costAfterSubsidy;
 
-  return Array.from({ length: days }, (_, i) => ({
-    day: i + 1,
-    withSolar: solarDetails.costAfterSubsidy + (dailyMaintenance * i),
-    withoutSolar: dailyBillWithoutSolar * i,
-    profit: (dailySavings * i) - solarDetails.costAfterSubsidy - (dailyMaintenance * i),
-    cumulativeSavings: (dailyBillWithoutSolar * i) - solarDetails.costAfterSubsidy - (dailyMaintenance * i)
-  }));
+    return {
+      day,
+      withSolar: Math.max(withSolar, 1),
+      withoutSolar: Math.max(withoutSolar, 1),
+      profit: Math.max(profit, 1),
+      cumulativeSavings,
+      solarGeneration: solarDetails.dailyGeneration,
+      efficiency: 1,
+      weatherImpact: 1
+    };
+  });
 };

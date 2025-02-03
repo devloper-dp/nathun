@@ -15,40 +15,44 @@ export const ChartTypeSwitcher: React.FC<ChartTypeSwitcherProps> = ({
   const types: { type: ChartType; icon: React.ReactNode; label: string; description: string }[] = [
     { 
       type: 'area', 
-      icon: <TrendingUp className="w-4 h-4" />, 
+      icon: <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />, 
       label: 'Area', 
-      description: 'Shows data as filled areas over time'
+      description: 'Shows cumulative data over time with filled regions'
     },
     { 
       type: 'bar', 
-      icon: <BarChart className="w-4 h-4" />, 
+      icon: <BarChart className="w-3 h-3 sm:w-4 sm:h-4" />, 
       label: 'Bar', 
-      description: 'Compare values with vertical bars'
+      description: 'Compare discrete values with vertical bars'
     },
     { 
       type: 'line', 
-      icon: <LineChart className="w-4 h-4" />, 
+      icon: <LineChart className="w-3 h-3 sm:w-4 sm:h-4" />, 
       label: 'Line', 
-      description: 'Track trends with connected points'
+      description: 'View trends with connected data points'
     },
     { 
       type: 'composed', 
-      icon: <PieChart className="w-4 h-4" />, 
+      icon: <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />, 
       label: 'Combined', 
-      description: 'Mix of bars and lines for complex data'
+      description: 'Mix of bars and lines for complex analysis'
     },
   ];
 
   return (
-    <div className="flex flex-col items-center gap-4 mb-6">
-      <div className="flex flex-wrap justify-center gap-3">
+    <div className="flex flex-col items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
         {types.map(({ type, icon, label, description }) => (
           <button
             key={type}
             onClick={() => onChange(type)}
             className={`
-              chart-type-button
-              ${value === type ? 'active' : ''}
+              relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg
+              font-medium transition-all duration-300 group text-xs sm:text-sm
+              ${value === type 
+                ? 'bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-600 text-white shadow-lg shadow-yellow-500/20'
+                : 'bg-gray-900/50 text-gray-300 hover:bg-gray-800/80 hover:shadow-lg hover:shadow-yellow-500/10'
+              }
             `}
             title={description}
           >
@@ -58,20 +62,22 @@ export const ChartTypeSwitcher: React.FC<ChartTypeSwitcherProps> = ({
             `}>
               {icon}
             </span>
-            <span className="text-sm font-medium">
+            <span className="hidden sm:inline">
               {label}
             </span>
             
-            {/* Enhanced tooltip */}
+            {/* Enhanced tooltip - only show on larger screens */}
             <div className={`
+              hidden sm:block
               absolute -top-12 left-1/2 -translate-x-1/2
-              px-3 py-2 rounded-lg
-              bg-gray-800 text-white text-xs
+              px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg
+              bg-gray-800/95 backdrop-blur-sm text-white text-xs
               opacity-0 invisible
               group-hover:opacity-100 group-hover:visible
               transition-all duration-200
               whitespace-nowrap
-              shadow-lg
+              shadow-lg shadow-black/20
+              border border-yellow-500/20
               z-10
               before:content-['']
               before:absolute
@@ -82,6 +88,7 @@ export const ChartTypeSwitcher: React.FC<ChartTypeSwitcherProps> = ({
               before:h-2
               before:bg-gray-800
               before:rotate-45
+              before:border-b before:border-r before:border-yellow-500/20
             `}>
               {description}
             </div>
@@ -90,29 +97,33 @@ export const ChartTypeSwitcher: React.FC<ChartTypeSwitcherProps> = ({
             {value === type && (
               <div className="
                 absolute -top-1 -right-1
-                w-2.5 h-2.5
+                w-2 h-2 sm:w-3 sm:h-3
                 bg-white
                 rounded-full
                 shadow-md
-                border-2 border-blue-500
-                animate-pulse
+                border-2 border-yellow-500
+                animate-[pulse_1.5s_ease-in-out_infinite]
               "/>
             )}
           </button>
         ))}
       </div>
       
-      {/* Chart type description */}
+      {/* Chart type description - show on mobile */}
       <div className="
-        text-sm text-gray-600
-        bg-gray-50/80
+        sm:hidden
+        text-xs
+        bg-gray-900/70
         backdrop-blur-sm
-        px-4 py-2
+        px-3 py-1.5
         rounded-full
         transition-all duration-300 ease-out
-        animate-fade-in
+        animate-[fadeIn_0.3s_ease-out]
         shadow-inner
+        border border-yellow-500/20
+        flex items-center gap-2
       ">
+        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-[pulse_1.5s_ease-in-out_infinite]"></span>
         {types.find(t => t.type === value)?.description}
       </div>
     </div>
