@@ -80,7 +80,7 @@ export default function Navbar() {
               src="https://github.com/devloper-dp/nathun/raw/main/logo.png" 
               alt="Logo" 
               className="h-16 w-32 sm:h-20 sm:w-40 md:h-24 md:w-48 text-yellow-500"
-              animate={{ rotate: isScrolled ? 360 : 0 }}
+              animate={{ scale: isScrolled ? 1.2 : 1 }}
               transition={{ duration: 0.5 }}
             />
             <motion.span 

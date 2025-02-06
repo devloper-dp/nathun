@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import gridSvg from '../assets/grid.svg';
-import Process3D from './Process3D';
 
 interface Step {
   number: string;
@@ -103,12 +102,7 @@ export default function Process() {
             Experience our streamlined solar installation process, from consultation to completion
           </p>
         </motion.div>
-
-        {/* 3D Process Visualization */}
-        <div className="mt-16">
-          <Process3D activeStep={selectedStep} onStepSelect={setSelectedStep} />
-        </div>
-
+        <div><br></br></div>
         <div className="mt-24 relative">
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-yellow-500/20 via-yellow-500/40 to-yellow-500/20 transform -translate-y-1/2" />
           

@@ -1,8 +1,6 @@
 import React, { useState, Suspense, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Sun, Battery, Zap, ArrowRight, Shield } from 'lucide-react';
-import { useInView } from 'react-intersection-observer';
-import EnergySolutions3D from './EnergySolutions3D';
 import LoadingSpinner from './common/LoadingSpinner';
 
 interface Solution {
@@ -177,23 +175,7 @@ const EnergySolutions: React.FC<EnergySolutionsProps> = ({ children }) => {
             Discover our comprehensive range of solar energy solutions
           </motion.p>
         </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="energy-solutions-3d-container canvas-interactive canvas-shadow mt-16"
-        >
-          <Suspense fallback={<LoadingSpinner />}>
-            <EnergySolutions3D 
-              activeSolution={selectedSolution} 
-              onSolutionSelect={handleSolutionSelect}
-            >
-              {children}
-            </EnergySolutions3D>
-          </Suspense>
-        </motion.div>
-
+        <div><br></br></div>
         <motion.div 
           className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4"
           variants={containerVariants}

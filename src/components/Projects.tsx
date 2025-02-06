@@ -1,7 +1,6 @@
 import React, { useState, Suspense, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { MapPin, ArrowRight, Users, Building2, Factory, Shield } from 'lucide-react';
-import Projects3D from './Projects3D';
 import LoadingSpinner from './common/LoadingSpinner';
 
 interface Project {
@@ -242,18 +241,7 @@ const Projects: React.FC = () => {
               </motion.button>
             ))}
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-            className="projects-3d-container canvas-interactive canvas-shadow mt-16"
-          >
-            <Suspense fallback={<LoadingSpinner />}>
-              <Projects3D activeType={selectedType} onTypeSelect={handleTypeSelect} />
-            </Suspense>
-          </motion.div>
-
+          <div><br></br></div>
           <motion.div
             className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3"
             variants={containerVariants}

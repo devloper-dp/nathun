@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { Award, Star, Shield, Trophy } from 'lucide-react';
 import Marquee from 'react-fast-marquee';
 import { Suspense } from 'react';
-import Awards3D from './Awards3D';
 import AwardCard from './AwardCard';
 import CertificationCard from './CertificationCard';
 import LoadingSpinner from './common/LoadingSpinner';
@@ -138,17 +137,7 @@ export default function Awards() {
             Our commitment to excellence recognized by industry leaders
           </p>
         </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="awards-3d-container canvas-interactive canvas-shadow"
-        >
-          <Suspense fallback={<LoadingSpinner />}>
-            <Awards3D />
-          </Suspense>
-        </motion.div>
+        <div><br></br></div>
 
         <Marquee gradient={false} speed={50}>
           {awards.map((award, index) => (

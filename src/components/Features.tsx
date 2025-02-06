@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Shield, Sun, Battery, Wallet, LineChart, Clock, ArrowRight } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import gridSvg from '../assets/grid.svg';
-import Features3D from './Features3D';
 import LoadingSpinner from './common/LoadingSpinner';
 
 interface Feature {
@@ -124,18 +123,7 @@ const Features: React.FC = () => {
             Experience the future of energy with our innovative solar technology and smart solutions
           </p>
         </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="features-3d-container canvas-interactive canvas-shadow"
-        >
-          <Suspense fallback={<LoadingSpinner />}>
-            <Features3D />
-          </Suspense>
-        </motion.div>
-
+        <div><br></br></div>
         <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <motion.div
